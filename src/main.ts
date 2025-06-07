@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+import { DomainExceptionsFilter } from './shared/filters/domain-exception.filter';
+import { LoggerService } from './infrastructure/logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -23,6 +25,9 @@ async function bootstrap() {
       transform: true
     })
   )
+
+  const loggerService = await app.resolve(LoggerService);
+  app.useGlobalFilters(new DomainExceptionsFilter(loggerService));
   await app.listen(process.env.PORT ?? 5000);
 }
 bootstrap();

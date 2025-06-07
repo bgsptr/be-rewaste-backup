@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 
 export interface AuthenticatedRequest extends Request {
     user?: {
-        email?: string;
+        id?: string;
         role?: string;
     }
 }
@@ -51,9 +51,9 @@ export class AuthMiddleware implements NestMiddleware {
                 message: "invalid token payload"
             })
 
-            const email: string = decoded?.email || null;
+            const id: string = decoded?.id || null;
             const role: string = decoded?.role || null;
-            req.user = new AuthDecodedData(email, role);
+            req.user = new AuthDecodedData(id, role);
             next();
         })
     }

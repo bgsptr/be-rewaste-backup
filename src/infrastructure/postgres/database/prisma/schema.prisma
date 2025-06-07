@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountStatus {
+  active
+  inactive
+  suspended
+}
+
+enum RescheduleStatus {
+  active
+  inactive
+}
+
+enum PickupStatus {
+  attached
+  processed
+  finished
+}
+
+enum CarStatus {
+  operate
+  maintenance
+}
+
+enum PaymentStatus {
+  paid
+  unpaid
+  late
+}
+
+enum PaymentMethod {
+  bank
+  QRIS
+  WA
+}
+
+enum RatingScore {
+  _1
+  _2
+  _3
+  _4
+  _5
+}
+
+model User {
+  userId           String   @id
+  fullName         String
+  email            String
+  phoneNumber      String
+  password         String
+  nik              String
+  simNo            String?    // nullable
+  qrCode           String
+  addressId        String
+  rescheduleStatus RescheduleStatus
+  transporterId    String?    // nullable
+  villageId        String
+  loyaltyId        String
+  accountStatus    AccountStatus
+
+  address          Address   @relation(fields: [addressId], references: [addressId])
+  transporter      Transporter? @relation(fields: [transporterId], references: [id])
+  village          Village   @relation(fields: [villageId], references: [id])
+  loyalty          Loyalty   @relation(fields: [loyaltyId], references: [loyaltyId])
+  points           Point?
+  roles            UserRole[]
+  rewards          CitizenReward[]
+}
+
+model Role {
+  id    String   @id
+  name  String
+  users UserRole[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [userId])
+  role   Role   @relation(fields: [roleId], references: [id])
+  @@id([userId, roleId])
+}
+
+model Address {
+  addressId    String @id
+  fullAddress  String
+  lat          String
+  lng          String
+  users        User[]
+}
+
+model Point {
+  pointId       String  @id
+  userId        String  @unique
+  lifetimePoint Decimal
+  remainPoint   Decimal
+  user          User    @relation(fields: [userId], references: [userId])
+}
+
+model TrashType {
+  id   String @id
+  name String
+  trashHasTypes TrashHasTrashType[]
+}
+
+model Trash {
+  id              String       @id
+  pickupAt        DateTime
+  createdAt       DateTime
+  pickupRateTime  Int
+  pickupStatus    PickupStatus
+  point           Int
+  verifyStatus    Boolean
+  userDriverId    String
+  userCitizenId   String
+  rescheduleNote  String?
+  userDriver      User         @relation("Driver", fields: [userDriverId], references: [userId])
+  userCitizen     User         @relation("Citizen", fields: [userCitizenId], references: [userId])
+  types           TrashHasTrashType[]
+  verification    Verification?
+}
+
+model Car {
+  id           String     @id
+  carStatus    CarStatus
+  year         Int
+  merk         String
+  capacity     Int
+  platNo       String
+  transporterId String
+
+  transporter  Transporter @relation(fields: [transporterId], references: [id])
+  bbmHistory   BBMHistory[]
+  maintenance  MaintenanceHistory[]
+}
+
+model Transporter {
+  id                String @id
+  name              String
+  leaderFullname    String
+  emailTransporter  String
+  cars              Car[]
+  villages          TransporterVillage[]
+}
+
+model Invoice {
+  id             String        @id
+  nominal        Decimal
+  paymentStatus  PaymentStatus
+  paymentMethod  PaymentMethod
+  paidAt         DateTime?
+  deadlineAt     DateTime
+  userId         String
+  villageId      String
+  transporterId  String
+
+  user       User       @relation(fields: [userId], references: [userId])
+  transporter Transporter @relation(fields: [transporterId], references: [id])
+  village    Village    @relation(fields: [villageId], references: [id])
+}
+
+model Village {
+  id                 String @id
+  villageLogo        String
+  villageEmail       String
+  villageName        String
+  villageWebsiteUrl  String
+  officePhone        String
+  headVillagePhone   String
+  headVillageName    String
+  province           String
+  district           String
+  street             String
+  regency            String
+  description        String
+  wasteFees          Decimal
+  status             AccountStatus
+  userVerificatorId  String
+  familyTotal        Int?
+
+  userVerificator    User     @relation(fields: [userVerificatorId], references: [userId])
+  invoices           Invoice[]
+}
+
+model BBMHistory {
+  id          String   @id
+  evidenceUrl String
+  totalLiter  Decimal
+  createdAt   DateTime
+  kilometerAt Int
+  price       Decimal
+  carId       String
+  car         Car      @relation(fields: [carId], references: [id])
+}
+
+model MaintenanceHistory {
+  id             String   @id
+  lastMaintainAt DateTime
+  nextMaintainAt DateTime
+  description    String
+  maintainPrice  Decimal
+  carId          String
+  car            Car      @relation(fields: [carId], references: [id])
+}
+
+model Loyalty {
+  loyaltyId     String @id
+  name          String
+  minimumPoint  Int
+  maximumPoint  Int
+  users         User[]
+}
+
+model LoyaltyBenefit {
+  benefitCode  String  @id
+  name         String
+  description  String
+}
+
+model Verification {
+  id                String   @id
+  createdAt         DateTime
+  verificatorUserId String
+  trashId           String
+  verifyRateTime    Int
+  status            Boolean
+
+  trash             Trash     @relation(fields: [trashId], references: [id])
+  verificatorUser   User      @relation(fields: [verificatorUserId], references: [userId])
+}
+
+model VerificationBadge {
+  id                String @id
+  badgeName         String
+  badgeDescription  String
+  users             VerificatorVerificationBadge[]
+}
+
+model VerificatorVerificationBadge {
+  userId    String
+  badgeId   String
+  grantedAt DateTime
+  user      User      @relation(fields: [userId], references: [userId])
+  badge     VerificationBadge @relation(fields: [badgeId], references: [id])
+  @@id([userId, badgeId])
+}
+
+model Reward {
+  id          String   @id
+  name        String
+  description String
+  point       Int
+  users       CitizenReward[]
+}
+
+model CitizenReward {
+  userId       String
+  rewardId     String
+  pointRequired Int
+  name         String
+  description  String
+  user         User   @relation(fields: [userId], references: [userId])
+  reward       Reward @relation(fields: [rewardId], references: [id])
+  @@id([userId, rewardId])
+}
+
+model DriverRating {
+  ratingScore   RatingScore
+  createdAt     DateTime
+  userDriverId  String
+  userCitizenId String
+  @@id([userDriverId, userCitizenId, createdAt])
+}

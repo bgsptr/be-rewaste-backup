@@ -4,6 +4,9 @@ import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { DomainExceptionsFilter } from './shared/filters/domain-exception.filter';
 import { LoggerService } from './infrastructure/logger/logger.service';
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

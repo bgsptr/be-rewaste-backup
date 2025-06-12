@@ -2,10 +2,16 @@ import * as jwt from "jsonwebtoken";
 import { Injectable, NestMiddleware } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 
+export interface AdditionalData {
+    villageId?: string
+    transporterId?: string
+}
+
 export interface AuthenticatedRequest extends Request {
     user?: {
         id?: string;
         role?: string;
+        data?: AdditionalData;
     }
 }
 

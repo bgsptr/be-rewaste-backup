@@ -37,6 +37,8 @@ export class AuthService {
                 villageId: roleString.includes(roleEnum.VILLAGE) ? villageId : undefined,
             }
 
+            await this.userRepository.updateLastSeen(userId, new Date());
+
             const accessToken = this.generateJwtToken(payload, true);
             const refreshToken = this.generateJwtToken(payload, false);
             return {

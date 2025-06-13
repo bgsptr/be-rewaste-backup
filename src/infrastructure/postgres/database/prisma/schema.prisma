@@ -70,6 +70,7 @@ model User {
   loyaltyId             String?
   loyalty               Loyalty?                        @relation(fields: [loyaltyId], references: [loyaltyId])
   accountStatus         AccountStatus                   @default(active)
+  lastSeen              DateTime?
   createdAt             DateTime                        @default(now())
   points                Point?
   roles                 UserRoles[]

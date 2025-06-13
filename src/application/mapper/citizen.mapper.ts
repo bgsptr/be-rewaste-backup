@@ -5,9 +5,10 @@ import { IMapper } from "src/core/interfaces/mappers/mapper";
 import { CreateCitizenDto } from "../dto/citizens/create_citizen.dto";
 import { ResponseCitizenDto } from "../dto/citizens/response_citizen.dto";
 import { generateIdForRole, RoleIdGenerate } from "src/utils/generator";
+import { Hasher } from "src/utils/static/hasher";
 
-export class VillageMapper implements IMapper<CreateCitizenDto, User, ResponseCitizenDto> {
-    toEntity(dto: CreateCitizenDto, villageId: string, addressId?: string): User {
+export class CitizenMapper implements IMapper<CreateCitizenDto, User, ResponseCitizenDto> {
+    toEntity(dto: CreateCitizenDto, villageId: string, password: string, addressId?: string): User {
         return {
             userId: generateIdForRole(RoleIdGenerate.user),
             villageId,
@@ -19,7 +20,7 @@ export class VillageMapper implements IMapper<CreateCitizenDto, User, ResponseCi
             simNo: "",
             qrCode: "",
             addressId: addressId ?? null,
-            password: "",
+            password: password,
             rescheduleStatus: RescheduleStatus.active,
             accountStatus: AccountStatus.active,
             transporterId: "",

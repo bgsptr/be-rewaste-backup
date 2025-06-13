@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from "@nestjs/common";
 import { CreateVillageDto } from "src/application/dto/villages/create_village.dto";
-import VillageService from "src/core/services/village/village.service";
+import VillageService from "src/core/services/villages/village.service";
 
 @Controller('village')
 class VillageController {
@@ -11,6 +11,15 @@ class VillageController {
     @Post()
     async createNewVillageController(@Body() createVillageDto: CreateVillageDto) {
         // add zod to validate and error handling
-        return await this.villageService.addVillageToRepo(createVillageDto);
+        const village = await this.villageService.addVillageToRepo(createVillageDto);
+        return {
+            status: true,
+            message: `successfully create village with id ${village.villageId}`,
+            deta: {
+                village
+            }
+        }
     }
 }
+
+export default VillageController;

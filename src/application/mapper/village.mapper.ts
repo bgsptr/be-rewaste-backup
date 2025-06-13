@@ -23,7 +23,7 @@ export class VillageMapper implements IMapper<CreateVillageDto, Village, Respons
             villageId: entity.id,
             villageName: entity.villageName,
             district: entity.district,
-            status: entity.status ,
+            status: entity.status,
             // logo: entity.villageLogo,
             // website: entity.villageWebsiteUrl,
         };

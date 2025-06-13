@@ -6,5 +6,5 @@ export interface IUserRepository extends Repository<User> {
     registerAccount(data: Partial<User>): Promise<string>;
     // registerCitizen(data: Partial<User>): Promise<string>;
     getCitizens(): Promise<any | User[]>;
-    
+    updateLastSeen(userId: string, date: Date): Promise<void>;
 }

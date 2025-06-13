@@ -1,15 +1,14 @@
 import { Injectable } from "@nestjs/common";
-import { $Enums, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import { IUserRepository } from "src/core/interfaces/repositories/users.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
-import { generateId } from "src/utils/generator";
 import { normalizeUserDefaults } from "src/utils/normalized/user.normalize";
 
 @Injectable()
 class UsersRepository implements IUserRepository {
-    constructor(private prisma: PrismaService) {
-
-    }
+    constructor(
+        private prisma: PrismaService
+    ) {}
 
     async getAccountCredentialWithEmail(email: string) {
         return await this.prisma.user.findFirstOrThrow({
@@ -54,6 +53,17 @@ class UsersRepository implements IUserRepository {
     async getCitizens(): Promise<User[]> {
         return await this.prisma.user.findMany();
     }
+
+    async updateLastSeen(userId: string, date: Date): Promise<void> {
+        await this.prisma.user.update({
+            where: {
+                userId,
+            },
+            data: {
+                lastSeen: date
+            }
+        })
+    }
 }
 
-export default UsersRepository
+export default UsersRepository;

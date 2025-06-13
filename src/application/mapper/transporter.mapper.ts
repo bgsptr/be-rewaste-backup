@@ -4,7 +4,6 @@ import { ResponseVillageDto } from "src/application/dto/villages/response_villag
 import { IMapper } from "src/core/interfaces/mappers/mapper";
 import { CreateTransporterDto } from "../dto/transporter/create_transporter.dto";
 import { generateIdForRole, RoleIdGenerate } from "src/utils/generator";
-import { RolesEnum } from "src/shared/constants/roles.contants";
 
 export class TransporterMapper implements IMapper<CreateTransporterDto, Transporter, ResponseVillageDto> {
     toEntity(dto: CreateTransporterDto): Transporter {

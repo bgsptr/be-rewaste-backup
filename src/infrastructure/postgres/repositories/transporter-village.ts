@@ -1,8 +1,10 @@
+import { Injectable } from "@nestjs/common";
 import { Transporter } from "@prisma/client";
 import ITransporterVillageRepository from "src/core/interfaces/repositories/transporter-village.repository.interface";
 import ITransporterRepository from "src/core/interfaces/repositories/transporter.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
 
+@Injectable()
 class TransporterVillageRepository implements ITransporterVillageRepository {
     constructor(
         private prisma: PrismaService, 

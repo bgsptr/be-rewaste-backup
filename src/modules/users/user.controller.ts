@@ -13,7 +13,7 @@ class UserController {
 
     @Post()
     async createNewCitizenAccountController(@Body() citizenDto: CreateCitizenDto, @GetVillageId() villageId: string) {
-        this.loggerService.log("controller of /citizens");
+        this.loggerService.log("POST /citizens");
         const userId = await this.userService.addCitizen(citizenDto, villageId);
 
         return {

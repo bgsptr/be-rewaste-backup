@@ -28,6 +28,7 @@ enum PickupStatus {
 enum CarStatus {
   operate
   maintenance
+  idle
 }
 
 enum PaymentStatus {
@@ -60,12 +61,12 @@ model User {
   simNo                 String?
   qrCode                String?
   addressId             String?
-  address               Address?                         @relation(fields: [addressId], references: [addressId])
+  address               Address?                        @relation(fields: [addressId], references: [addressId])
   rescheduleStatus      RescheduleStatus                @default(active)
   transporterId         String?
   transporter           Transporter?                    @relation(fields: [transporterId], references: [id])
-  villageId             String
-  village               Village                         @relation("VillageUsers", fields: [villageId], references: [id])
+  villageId             String?
+  village               Village?                        @relation("VillageUsers", fields: [villageId], references: [id])
   wasteFees             String?
   loyaltyId             String?
   loyalty               Loyalty?                        @relation(fields: [loyaltyId], references: [loyaltyId])
@@ -81,6 +82,7 @@ model User {
   driverRatingsReceived DriverRating[]                  @relation("DriverRatingReceived")
   verificatorBadges     VerificatorVerificationBadges[]
   citizenRewards        CitizenReward[]
+  car                   Car?
 
   // verifiedVillages Village[]                            @relation("VerificatorVillage")
   Invoice          Invoice[]
@@ -142,6 +144,8 @@ model Car {
   transporter   Transporter          @relation(fields: [transporterId], references: [id])
   bbmHistory    BBMHistory[]
   maintenance   MaintenanceHistory[]
+  driver        User                  @relation(fields: [driverId], references: [userId])
+  driverId      String                @unique
 }
 
 model Transporter {

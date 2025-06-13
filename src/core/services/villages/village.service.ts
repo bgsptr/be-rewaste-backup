@@ -1,3 +1,4 @@
+import { Injectable } from "@nestjs/common";
 import { User } from "@prisma/client";
 import { CreateVillageDto } from "src/application/dto/villages/create_village.dto";
 import { VillageMapper } from "src/application/mapper/village.mapper";
@@ -6,8 +7,8 @@ import UserRoleRepository from "src/infrastructure/postgres/repositories/user-ro
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 import { roleEnum } from "src/utils/enum/role.enum";
-import { generateId, generateIdForRole, RoleIdGenerate } from "src/utils/generator";
 
+@Injectable()
 export class VillageService {
     constructor(
         private logger: LoggerService, 
@@ -24,7 +25,7 @@ export class VillageService {
 
         // create village entity
         const accountData: Partial<User> = {
-            userId: generateIdForRole(RoleIdGenerate.village),
+            userId: villageId,
             villageId
         };
 
@@ -36,6 +37,17 @@ export class VillageService {
 
         // return response
         return this.villageMapper.toResponse(entity);
+    }
+
+    async listAllVillages() {
+        this.logger.log("list all village service");
+
+        const villages = await this.villageRepository.getAll();
+        this.logger.log(villages);
+        return villages.map(village => ({
+            ...village,
+            transporterCount: village.transporterVillage.length,
+        }))
     }
 }
 

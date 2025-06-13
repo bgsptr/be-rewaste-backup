@@ -1,16 +1,14 @@
 import { AccountStatus, RescheduleStatus, User, Village } from "@prisma/client";
-import { CreateVillageDto } from "src/application/dto/villages/create_village.dto";
-import { ResponseVillageDto } from "src/application/dto/villages/response_village.dto";
 import { IMapper } from "src/core/interfaces/mappers/mapper";
 import { CreateCitizenDto } from "../dto/citizens/create_citizen.dto";
 import { ResponseCitizenDto } from "../dto/citizens/response_citizen.dto";
 import { generateIdForRole, RoleIdGenerate } from "src/utils/generator";
-import { Hasher } from "src/utils/static/hasher";
 
 export class CitizenMapper implements IMapper<CreateCitizenDto, User, ResponseCitizenDto> {
-    toEntity(dto: CreateCitizenDto, villageId: string, password: string, addressId?: string): User {
+    toEntity(dto: CreateCitizenDto, villageId: string | null = null, password: string, role: RoleIdGenerate = RoleIdGenerate.user, addressId: string | null = null, transporterId: string | null = null): User {
+        const userId = generateIdForRole(role);
         return {
-            userId: generateIdForRole(RoleIdGenerate.user),
+            userId: transporterId ? transporterId : userId,
             villageId,
             nik: dto.nik,
             phoneNumber: dto.phone,
@@ -19,13 +17,14 @@ export class CitizenMapper implements IMapper<CreateCitizenDto, User, ResponseCi
             fullName: dto.fullname,
             simNo: "",
             qrCode: "",
-            addressId: addressId ?? null,
+            addressId,
             password: password,
             rescheduleStatus: RescheduleStatus.active,
             accountStatus: AccountStatus.active,
-            transporterId: "",
+            transporterId: transporterId,
             wasteFees: "",
-            loyaltyId: ""
+            loyaltyId: role === RoleIdGenerate.user ? "loyalty-1" : null,
+            lastSeen: null,
         };
     }
 

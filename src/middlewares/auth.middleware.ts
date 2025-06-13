@@ -10,7 +10,7 @@ export interface AdditionalData {
 export interface AuthenticatedRequest extends Request {
     user?: {
         id?: string;
-        role?: string;
+        roles?: string[];
         data?: AdditionalData;
     }
 }
@@ -18,7 +18,7 @@ export interface AuthenticatedRequest extends Request {
 export class AuthDecodedData {
     constructor(
         public email: string,
-        public role: string,
+        public roles: string[],
         // public iat?: number,
         // public exp?: number
     ) {}
@@ -58,8 +58,8 @@ export class AuthMiddleware implements NestMiddleware {
             })
 
             const id: string = decoded?.id || null;
-            const role: string = decoded?.role || null;
-            req.user = new AuthDecodedData(id, role);
+            const roles: string[] = decoded?.roles || null;
+            req.user = new AuthDecodedData(id, roles);
             next();
         })
     }

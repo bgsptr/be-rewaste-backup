@@ -10,8 +10,10 @@ import AuthDto from "src/application/dto/auth.dto";
 interface PayloadJWT {
     userId: string,
     roleString: string[],
-    transporterId?: string | null,
-    villageId?: string,
+    data: {
+        transporterId?: string | null,
+        villageId: string | null,
+    }
 }
 
 @Injectable()
@@ -33,8 +35,10 @@ export class AuthService {
             const payload: PayloadJWT = {
                 userId,
                 roleString,
-                transporterId: roleString.includes(roleEnum.TRANSPORTER) && transporterId !== null ? transporterId : undefined,
-                villageId: roleString.includes(roleEnum.VILLAGE) ? villageId : undefined,
+                data: {
+                    transporterId: roleString.includes(roleEnum.TRANSPORTER) && transporterId !== null ? transporterId : undefined,
+                    villageId: roleString.includes(roleEnum.VILLAGE) && villageId ? villageId : null,
+                }
             }
 
             await this.userRepository.updateLastSeen(userId, new Date());

@@ -5,4 +5,4 @@ export enum roleEnum {
     TRANSPORTER = '4',
     VILLAGE = '5',
     ADMIN = '6',
-}
+}   

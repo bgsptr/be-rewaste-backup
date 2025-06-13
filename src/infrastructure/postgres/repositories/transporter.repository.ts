@@ -1,7 +1,9 @@
+import { Injectable } from "@nestjs/common";
 import { Transporter } from "@prisma/client";
 import ITransporterRepository from "src/core/interfaces/repositories/transporter.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
 
+@Injectable()
 class TransporterRepository implements ITransporterRepository {
     constructor(
         private prisma: PrismaService, 

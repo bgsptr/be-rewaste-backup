@@ -10,6 +10,8 @@ import { RatingModule } from './modules/rating/rating.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CarModule } from './modules/cars/car.module';
 import { UserModule } from './modules/users/user.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TrashModule } from './modules/trash/trash.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { UserModule } from './modules/users/user.module';
     AuthModule,
     CarModule,
     UserModule,
+    TrashModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [],
   providers: [],

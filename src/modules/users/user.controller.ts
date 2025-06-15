@@ -4,7 +4,6 @@ import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception"
 import UserService from "src/core/services/users/user.service";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import { FetchJWTPayload } from "src/shared/decorators/fetch-jwt-payload.decorator";
-import { GetVillageId } from "src/shared/decorators/get-village-id.decorator";
 
 @Controller("citizens")
 class UserController {

@@ -13,6 +13,28 @@ class UsersRepository implements IUserRepository {
         private prisma: PrismaService
     ) { }
 
+    async checkAddressIsExist(userId: string): Promise<{ addressId: string | null } | null> {
+        return await this.prisma.user.findFirst({
+            where: {
+                userId,
+            },
+            select: {
+                addressId: true,
+            },
+        })
+    }
+
+    async updateAddNewAddress(addressId: string, userId: string) {
+        return await this.prisma.user.update({
+            data: {
+                addressId
+            },
+            where: {
+                userId
+            }
+        })
+    }
+
     async getAccountCredentialWithEmail(email: string) {
         return await this.prisma.user.findFirstOrThrow({
             where: {
@@ -103,7 +125,7 @@ class UsersRepository implements IUserRepository {
         })
     }
 
-    async getAllCitizenHavingAddressAndNotRescheduled(): Promise<any> {
+    async getAllCitizenHavingAddressAndNotRescheduled() {
         return await this.prisma.user.findMany({
             where: {
                 roles: {

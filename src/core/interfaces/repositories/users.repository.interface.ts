@@ -8,4 +8,6 @@ export interface IUserRepository extends Repository<User> {
     getCitizens(): Promise<any | User[]>;
     updateLastSeen(userId: string, date: Date): Promise<void>;
     getAllCitizenHavingAddressAndNotRescheduled(): Promise<any>;
+    updateAddNewAddress(addressId: string, userId: string): Promise<any>;
+    checkAddressIsExist(addressId: string): Promise<{ addressId: string | null } | null>;
 }

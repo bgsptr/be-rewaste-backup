@@ -1,4 +1,5 @@
-import { v4 as uuidv4 } from "uuid"
+import { v4 as uuidv4 } from "uuid";
+import { nanoid } from "nanoid";
 
 export enum RoleIdGenerate {
     user = "USR",
@@ -16,4 +17,8 @@ export const generateIdForRole = (role: RoleIdGenerate): string => {
 
 export const generateId = (): string => {
     return uuidv4();
+}
+
+export const generateIdWithNano = (): string => {
+    return nanoid(16);
 }

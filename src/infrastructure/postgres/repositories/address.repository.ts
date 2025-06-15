@@ -9,9 +9,11 @@ class AddressRepository {
     ) { }
 
     async create({ addressId, fullAddress = "", lat = "", lng = "" }: Address) {
-        await this.prisma.address.create({
+        const { addressId: id } = await this.prisma.address.create({
             data: { addressId, fullAddress, lat, lng }
         });
+
+        return id;
     }
 
     async generateAddressId(addressId: string) {

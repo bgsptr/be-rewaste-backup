@@ -6,7 +6,8 @@ import { LoggerService } from "src/infrastructure/logger/logger.service";
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
-import { roleEnum } from "src/utils/enum/role.enum";
+import { roleNumber } from "src/utils/enum/role.enum";
+import { Hasher } from "src/utils/static/hasher";
 
 @Injectable()
 export class VillageService {
@@ -26,14 +27,16 @@ export class VillageService {
         // create village entity
         const accountData: Partial<User> = {
             userId: villageId,
-            villageId
+            villageId,
+            email: dto.email,
         };
 
+        const password = await Hasher.hashPassword("village123");
         // create account for village
-        const userIdGenerated = await this.usersRepository.registerAccount(accountData);
+        const userIdGenerated = await this.usersRepository.registerAccount(accountData, password);
 
         // add role
-        await this.userRoleRepository.addRole(userIdGenerated, roleEnum.VILLAGE);
+        await this.userRoleRepository.addRole(userIdGenerated, roleNumber.VILLAGE);
 
         // return response
         return this.villageMapper.toResponse(entity);

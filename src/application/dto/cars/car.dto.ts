@@ -3,5 +3,5 @@ export interface CarDto {
     year: number;
     capacity: number;
     plat_no: string;
-    driverId: string;
+    driverId?: string;
 }

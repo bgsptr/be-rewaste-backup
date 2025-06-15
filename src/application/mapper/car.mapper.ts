@@ -15,7 +15,7 @@ export class CarMapper implements IMapper<CarDto, Car, ResponseCarDto> {
             platNo: dto.plat_no,
             // apply empty string if admin add car
             transporterId,
-            driverId: dto.driverId ?? "",
+            driverId: dto.driverId ?? null,
         }
     }
 }

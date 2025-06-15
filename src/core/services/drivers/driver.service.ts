@@ -2,19 +2,22 @@ import { Injectable } from "@nestjs/common";
 import { User } from "@prisma/client";
 import { CreateDriverDto } from "src/application/dto/drivers/create_driver.dto";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
+import RatingRepository from "src/infrastructure/postgres/repositories/rating.repository";
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
-import { RolesEnum } from "src/shared/constants/roles.contants";
-import { roleEnum } from "src/utils/enum/role.enum";
+import { roleNumber } from "src/utils/enum/role.enum";
 import { generateIdForRole, RoleIdGenerate } from "src/utils/generator";
+import DayConvertion from "src/utils/static/dayjs";
+import { Hasher } from "src/utils/static/hasher";
 
 @Injectable()
 class DriverService {
     constructor(
         private userRepository: UsersRepository,
         private userRoleRepository: UserRoleRepository,
+        private ratingRepository: RatingRepository,
         private logger: LoggerService,
-    ) {}
+    ) { }
 
     async addDriver(data: CreateDriverDto, transporterId?: string) {
         // create account
@@ -28,12 +31,40 @@ class DriverService {
             transporterId,
         }
 
-        const userId = await this.userRepository.registerAccount(partialUser);
+        const password = await Hasher.hashPassword("driver123");
+
+        const userId = await this.userRepository.registerAccount(partialUser, password);
 
         // add role to driver
-        await this.userRoleRepository.addRole(userId, roleEnum.DRIVER);
+        await this.userRoleRepository.addRole(userId, roleNumber.DRIVER);
 
         return userId;
+    }
+
+    async getAllDriversByTransporterId(transporterId: string) {
+        const drivers = await this.userRepository.getDriverByTransporter(transporterId);
+
+        const driverIds = drivers.map(driver => driver.userId);
+
+        const groupedRatings = await this.ratingRepository.getAvgRatingByExistDriver(driverIds);
+        return drivers.map(driver => {
+            const rolesOnly = driver.roles.map(role => role.roleId);
+            if (!rolesOnly.includes(roleNumber.DRIVER)) return null;
+            const { password, nik, rescheduleStatus, wasteFees, loyaltyId, qrCode, roles, ...restOfAttribute } = driver;
+
+            const found = groupedRatings.find(group => group.userDriverId === driver.userId);
+            const now = DayConvertion.getCurrent();
+            const createdAt = DayConvertion.getTarget(driver.createdAt);
+            const yearExp = DayConvertion.getDiffOfYear(now, createdAt);
+            return {
+                ...restOfAttribute,
+                score: found?._avg.ratingScore ?? null,
+                experience: {
+                    yearExp,
+                    monthExp: DayConvertion.getDiffOfMonth(now, createdAt, yearExp),
+                }
+            }
+        }).filter(Boolean);
     }
 }
 

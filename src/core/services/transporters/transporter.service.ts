@@ -10,7 +10,7 @@ import TransporterRepository from "src/infrastructure/postgres/repositories/tran
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import { RolesEnum } from "src/shared/constants/roles.contants";
-import { roleEnum } from "src/utils/enum/role.enum";
+import { roleNumber } from "src/utils/enum/role.enum";
 import { generateId, RoleIdGenerate } from "src/utils/generator";
 import { Hasher } from "src/utils/static/hasher";
 
@@ -49,7 +49,7 @@ export class TransporterService {
         console.log("created account for transporter: ", userId);
 
         // add role
-        await this.userRoleRepository.addRole(userId, roleEnum.TRANSPORTER);
+        await this.userRoleRepository.addRole(userId, roleNumber.TRANSPORTER);
 
         // check if payload internal transporter is false (swasta) lalu buat repository untuk model itu
 

@@ -3,7 +3,7 @@ import { CreateVillageDto } from "src/application/dto/villages/create_village.dt
 import { ResponseVillageDto } from "src/application/dto/villages/response_village.dto";
 import { IMapper } from "src/core/interfaces/mappers/mapper";
 import { RolesEnum } from "src/shared/constants/roles.contants";
-import { roleEnum } from "src/utils/enum/role.enum";
+import { roleNumber } from "src/utils/enum/role.enum";
 import { generateIdForRole, RoleIdGenerate } from "src/utils/generator";
 
 export class VillageMapper implements IMapper<CreateVillageDto, Village, ResponseVillageDto> {
@@ -17,6 +17,7 @@ export class VillageMapper implements IMapper<CreateVillageDto, Village, Respons
             description: "",
             status: AccountStatus.active,
             createdAt: new Date(),
+            userVerificatorId: null,
             // kkT: dto.kkTotal
         };
     }

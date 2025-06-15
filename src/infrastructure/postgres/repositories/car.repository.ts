@@ -1,7 +1,9 @@
+import { Injectable } from "@nestjs/common";
 import { $Enums, Car } from "@prisma/client";
 import { ICarRepository } from "src/core/interfaces/repositories/car.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
 
+@Injectable()
 class CarRepository implements ICarRepository {
     constructor(
         private prisma: PrismaService,

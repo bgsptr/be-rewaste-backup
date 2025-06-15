@@ -19,11 +19,11 @@ export class CitizenMapper implements IMapper<CreateCitizenDto, User, ResponseCi
             qrCode: "",
             addressId,
             password: password,
-            rescheduleStatus: RescheduleStatus.active,
+            rescheduleStatus: RescheduleStatus.inactive,
             accountStatus: AccountStatus.active,
             transporterId: transporterId,
             wasteFees: "",
-            loyaltyId: role === RoleIdGenerate.user ? "loyalty-1" : null,
+            loyaltyId: role === RoleIdGenerate.user ? "LOY-BRONZE" : null,
             lastSeen: null,
         };
     }

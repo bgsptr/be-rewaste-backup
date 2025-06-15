@@ -6,6 +6,10 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { VillageModule } from './modules/village/village.module';
 import { TransporterModule } from './modules/transporters/transporter.module';
 import { AddressModule } from './modules/addresses/address.module';
+import { RatingModule } from './modules/rating/rating.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CarModule } from './modules/cars/car.module';
+import { UserModule } from './modules/users/user.module';
 
 @Module({
   imports: [
@@ -19,6 +23,10 @@ import { AddressModule } from './modules/addresses/address.module';
     VillageModule,
     TransporterModule,
     AddressModule,
+    RatingModule,
+    AuthModule,
+    CarModule,
+    UserModule,
   ],
   controllers: [],
   providers: [],

@@ -17,7 +17,7 @@ export interface AuthenticatedRequest extends Request {
 
 export class AuthDecodedData {
     constructor(
-        public email: string,
+        public id: string,
         public roles: string[],
         // public iat?: number,
         // public exp?: number
@@ -57,8 +57,10 @@ export class AuthMiddleware implements NestMiddleware {
                 message: "invalid token payload"
             })
 
-            const id: string = decoded?.id || null;
-            const roles: string[] = decoded?.roles || null;
+            console.log("hallo: ", decoded)
+
+            const id: string = decoded?.userId || null;
+            const roles: string[] = decoded?.roleString || null;
             req.user = new AuthDecodedData(id, roles);
             next();
         })

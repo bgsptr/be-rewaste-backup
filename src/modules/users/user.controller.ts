@@ -1,7 +1,9 @@
 import { Body, Controller, Post } from "@nestjs/common";
 import { CreateCitizenDto } from "src/application/dto/citizens/create_citizen.dto";
+import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
 import UserService from "src/core/services/users/user.service";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
+import { FetchJWTPayload } from "src/shared/decorators/fetch-jwt-payload.decorator";
 import { GetVillageId } from "src/shared/decorators/get-village-id.decorator";
 
 @Controller("citizens")
@@ -9,12 +11,14 @@ class UserController {
     constructor(
         private userService: UserService,
         private loggerService: LoggerService,
-    ) {}
+    ) { }
 
     @Post()
-    async createNewCitizenAccountController(@Body() citizenDto: CreateCitizenDto, @GetVillageId() villageId: string) {
+    async createNewCitizenAccountController(@Body() citizenDto: CreateCitizenDto, @FetchJWTPayload() payload: { id: string, roles: string[] }) {
         this.loggerService.log("POST /citizens");
-        const userId = await this.userService.addCitizen(citizenDto, villageId);
+        this.loggerService.debug(payload);
+        if (!payload) throw new CustomForbidden();
+        const userId = await this.userService.addCitizen(citizenDto, payload.id);
 
         return {
             status: true,

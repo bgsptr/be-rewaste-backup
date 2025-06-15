@@ -1,14 +1,17 @@
 import { Injectable } from "@nestjs/common";
-import { User } from "@prisma/client";
+import { RescheduleStatus, User } from "@prisma/client";
+import { CustomConflict } from "src/core/exceptions/custom-conflict.exception";
 import { IUserRepository } from "src/core/interfaces/repositories/users.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
+import { roleNumber } from "src/utils/enum/role.enum";
 import { normalizeUserDefaults } from "src/utils/normalized/user.normalize";
+import { Hasher } from "src/utils/static/hasher";
 
 @Injectable()
 class UsersRepository implements IUserRepository {
     constructor(
         private prisma: PrismaService
-    ) {}
+    ) { }
 
     async getAccountCredentialWithEmail(email: string) {
         return await this.prisma.user.findFirstOrThrow({
@@ -26,19 +29,38 @@ class UsersRepository implements IUserRepository {
         })
     }
 
-    async registerAccount(data: Partial<User>): Promise<string> {
+    async registerAccount(data: Partial<User>, password?: string): Promise<string> {
+        // const password = await Hasher.hashPassword("driver123");
+        data = {
+            ...data,
+            password
+        }
         const normalized = normalizeUserDefaults(data);
-        const { userId: returnedId } = await this.prisma.user.create({
-            data: normalized
-        });
 
-        return returnedId;
+        try {
+            const { userId } = await this.prisma.user.create({ data: normalized });
+            return userId;
+        } catch (err) {
+            if (err.code === 'P2002') { // Unique constraint failed
+                throw new CustomConflict('user', 'email');
+            }
+
+            throw err;
+        }
     }
 
-    async registerAccountFullData(data: User): Promise<string> {
-        const { userId } = await this.prisma.user.create({ data });
 
-        return userId;
+    async registerAccountFullData(data: User): Promise<string> {
+        try {
+            const { userId } = await this.prisma.user.create({ data });
+
+            return userId;
+        } catch (err) {
+            if (err.code === 'P2002') { // Unique constraint failed
+                throw new CustomConflict('user', 'email');
+            }
+            throw err;
+        }
     }
 
     async addRoleToAccount(roleId: string, userId: string) {
@@ -63,6 +85,44 @@ class UsersRepository implements IUserRepository {
                 lastSeen: date
             }
         })
+    }
+
+    async getDriverByTransporter(id: string) {
+        return await this.prisma.user.findMany({
+            include: {
+                car: {
+                    select: {
+                        id: true,
+                    }
+                },
+                roles: true
+            },
+            where: {
+                transporterId: id
+            }
+        })
+    }
+
+    async getAllCitizenHavingAddressAndNotRescheduled(): Promise<any> {
+        return await this.prisma.user.findMany({
+            where: {
+                roles: {
+                    some: {
+                        roleId: roleNumber.CITIZEN,
+                    }
+                },
+                rescheduleStatus: RescheduleStatus.inactive,
+            },
+            select: {
+                userId: true,
+                villageId: true,
+                address: {
+                    select: {
+                        addressId: true,
+                    },
+                },
+            }
+        });
     }
 }
 

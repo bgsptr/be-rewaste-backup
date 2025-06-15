@@ -1,4 +1,4 @@
-export enum roleEnum {
+export enum roleNumber {
     CITIZEN = '1',
     VERIFICATOR = '2',
     DRIVER = '3',

@@ -5,13 +5,22 @@ import { IUserRepository } from "src/core/interfaces/repositories/users.reposito
 import PrismaService from "src/core/services/prisma/prisma.service";
 import { roleNumber } from "src/utils/enum/role.enum";
 import { normalizeUserDefaults } from "src/utils/normalized/user.normalize";
-import { Hasher } from "src/utils/static/hasher";
 
 @Injectable()
 class UsersRepository implements IUserRepository {
     constructor(
         private prisma: PrismaService
     ) { }
+
+    async getVerificatorDataById(verificatorId: string): Promise<User | null> {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                userId: verificatorId
+            }
+        });
+
+        return user ?? null;
+    }
 
     async checkAddressIsExist(userId: string): Promise<{ addressId: string | null } | null> {
         return await this.prisma.user.findFirst({

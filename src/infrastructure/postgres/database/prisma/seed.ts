@@ -115,6 +115,23 @@ async function main() {
     skipDuplicates: true
   });
 
+  const trashType = await prisma.trashType.createMany({
+    data: [
+      {
+        id: '1',
+        name: 'Organik'
+      },
+      {
+        id: '2',
+        name: 'Anorganik'
+      },
+      {
+        id: '3',
+        name: 'Residu'
+      }
+    ]
+  })
+
   console.log('Seeding completed successfully!');
 }
 

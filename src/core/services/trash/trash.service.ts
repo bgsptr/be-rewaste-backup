@@ -1,7 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PickupStatus, Trash } from "@prisma/client";
+import { PickupStatus, Trash, TrashHasTrashType } from "@prisma/client";
+import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
+import TrashTypeMapRepository from "src/infrastructure/postgres/repositories/trash-type-map.repository";
+import TrashTypeRepository from "src/infrastructure/postgres/repositories/trash-type.repository";
 import TrashRepository from "src/infrastructure/postgres/repositories/trash.repository";
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import { generateIdWithNano } from "src/utils/generator";
@@ -12,9 +15,11 @@ class TrashService {
         private trashRepository: TrashRepository,
         private userRepository: UsersRepository,
         private logger: LoggerService,
+        private trashTypeMap: TrashTypeMapRepository,
+        private trashType: TrashTypeRepository,
     ) { }
 
-    @Cron(CronExpression.EVERY_MINUTE)
+    @Cron(CronExpression.EVERY_12_HOURS)
     async generateRegularPickups() {
         this.logger.log("do cron for create trash job");
         try {
@@ -25,13 +30,15 @@ class TrashService {
                 return;
             }
 
+            const generatedTrashId = `WS-${generateIdWithNano()}`;
+
             const trashPickups = activeCitizens.filter(pickup => pickup.villageId && pickup.address?.addressId).map(
                 pickup => {
                     return {
                         verifyStatus: false,
                         pickupStatus: PickupStatus.draft,
                         createdAt: new Date(),
-                        id: `WS-${generateIdWithNano()}`,
+                        id: generatedTrashId,
                         userCitizenId: pickup.userId,
                         userDriverId: null,
                         pickupAt: null,
@@ -48,11 +55,72 @@ class TrashService {
             }
 
             await this.trashRepository.createTrash(trashPickups);
+
+            const typeIds = await this.trashType.getAllTrashTypeIds();
+
+            const data: TrashHasTrashType[] = typeIds.map(type => {
+                return {
+                    trashId: generatedTrashId,
+                    trashTypeId: type.id,
+                    weight: 0,
+                    verificationStatus: false,
+                    imageUrl: "",
+                }
+            });
+
+            await this.trashTypeMap.generateTrashMapAllTypeCron(data);
             this.logger.log("successfully do the cron");
 
         } catch (err) {
             this.logger.error('Cron job failed', err.stack);
             throw err;
+        }
+    }
+
+    async getTrashHistories(userId: string) {
+        return await this.trashRepository.getAllWithTypes(userId);
+    }
+
+    async getTrashById(trashId: string, userId: string) {
+        try {
+            this.logger.debug("check trash from userId: ", userId);
+            await this.trashRepository.getTrashOwner(trashId);
+
+            const { userDriver, verification, trashTypes, ...rest } = await this.trashRepository.getWithTypesById(trashId);
+
+            // ganti relasi one user (verificator) to one trash entity
+
+            const verificator = verification.length && await this.userRepository.getVerificatorDataById(verification[0].verificatorUserId);
+            this.logger.debug(verificator);
+
+
+            const data = {
+                ...rest,
+                driver: {
+                    id: userDriver?.userId,
+                    name: userDriver?.fullName,
+                },
+                verificator: verificator ? {
+                    id: verificator?.userId,
+                    name: verificator?.fullName,
+                    verifyAt: verification[0].createdAt ?? null,
+                } : {},
+                weightTotal: trashTypes.reduce((total, tType) => total + tType.weight, 0),
+                trashTypes: trashTypes.map(type => ({
+                    weight: type.weight,
+                    trashTypeId: type.trashTypeId,
+                    name: type.trashType.name,
+                    imageUrl: type.imageUrl,
+                })),
+            }
+
+            this.logger.debug(data);
+
+            return data;
+
+        } catch (err) {
+            this.logger.error(err);
+            throw new CustomForbidden();
         }
     }
 }

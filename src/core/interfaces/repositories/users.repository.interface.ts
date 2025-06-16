@@ -10,4 +10,5 @@ export interface IUserRepository extends Repository<User> {
     getAllCitizenHavingAddressAndNotRescheduled(): Promise<any>;
     updateAddNewAddress(addressId: string, userId: string): Promise<any>;
     checkAddressIsExist(addressId: string): Promise<{ addressId: string | null } | null>;
+    getVerificatorDataById(verificatorId: string): Promise<User | null>;
 }

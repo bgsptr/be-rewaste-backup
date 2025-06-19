@@ -25,6 +25,17 @@ class CarController {
             }
         }
     }
+
+    @Get("fleet")
+    async getFleetOfCarController(@FetchJWTPayload() payload: { id: string }) {
+        const data = await this.carService.getFleetInformationWithDriverId(payload.id);
+
+        return {
+            success: true,
+            message: "data fetched successfully",
+            data,
+        }
+    }
 }
 
 export default CarController;

@@ -23,8 +23,9 @@ class CarService {
         return cars;
     }
 
-    async selectCarInformationById() {
-        
+    async getFleetInformationWithDriverId(driverId: string) {
+        const data = await this.carRepository.getFleetData(driverId);
+        return data;
     }
 }
 

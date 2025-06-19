@@ -10,6 +10,14 @@ class VillageController {
         private villageService: VillageService,
     ) { }
 
+    @Get("/hello")
+    async getHelloWorld() {
+        return {
+            success: true,
+            message: "hello world",
+        }
+    }
+
     @Post()
     async createNewVillageController(@Body() createVillageDto: CreateVillageDto) {
         // add zod to validate and error handling
@@ -35,6 +43,11 @@ class VillageController {
                 villages,
             }
         }
+    }
+
+    @Get("/dashboard")
+    async getDashbaordVillageController() {
+
     }
 }
 

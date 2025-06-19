@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Trash } from "@prisma/client";
+import { PickupStatus, Trash } from "@prisma/client";
 import PrismaService from "src/core/services/prisma/prisma.service";
 import DayConvertion from "src/utils/static/dayjs";
 
@@ -140,6 +140,26 @@ class TrashRepository {
             }
         });
     }
+
+    // async getAllTrashAndCitizenWithStatusInProgress() {
+    //     const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
+    //     return await this.prisma.trash.findMany({
+    //         where: {
+    //             pickupStatus: PickupStatus.in_progress,
+    //             createdAt: {
+    //                 gte: todayStart,
+    //                 lte: todayEnd,
+    //             }
+    //         },
+    //         select: {
+    //             userCitizen: {
+    //                 select: {
+                        
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
 }
 
 export default TrashRepository;

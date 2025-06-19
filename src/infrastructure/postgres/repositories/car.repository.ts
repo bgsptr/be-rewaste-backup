@@ -29,6 +29,36 @@ class CarRepository implements ICarRepository {
             }
         })
     }
+
+    async getFleetData(driverId: string) {
+        return await this.prisma.car.findUnique({
+            where: {
+                driverId,
+            },
+            select: {
+                id: true,
+                platNo: true,
+                merk: true,
+                capacity: true,
+                year: true,
+                driver: {
+                    select: {
+                        userId: true,
+                        fullName: true,
+                    }
+                },
+                bbmHistory: {
+                    select: {
+                        id: true,
+                        totalLiter: true,
+                        kilometerAt: true,
+                        price: true,
+                        createdAt: true,
+                    }
+                }
+            }
+        });
+    }
 }
 
 export default CarRepository;

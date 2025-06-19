@@ -1,10 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { RescheduleStatus, User } from "@prisma/client";
+import { AccountStatus, PickupStatus, RescheduleStatus, User } from "@prisma/client";
 import { CustomConflict } from "src/core/exceptions/custom-conflict.exception";
 import { IUserRepository } from "src/core/interfaces/repositories/users.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
 import { roleNumber } from "src/utils/enum/role.enum";
 import { normalizeUserDefaults } from "src/utils/normalized/user.normalize";
+import DayConvertion from "src/utils/static/dayjs";
 
 @Injectable()
 class UsersRepository implements IUserRepository {
@@ -155,6 +156,73 @@ class UsersRepository implements IUserRepository {
             }
         });
     }
+
+    async associateAllDriverToSelectedVillage(drivers: string[], driverVillageId: string): Promise<void> {
+        await this.prisma.user.updateMany({
+            data: {
+                driverVillageId
+            },
+            where: {
+                userId: {
+                    in: drivers
+                }
+            }
+        })
+    }
+
+    async getActiveCitizensWithTodayDraftTrash(villageId: string) {
+        const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
+
+        return await this.prisma.user.findMany({
+            where: {
+                accountStatus: AccountStatus.active,
+                villageId: villageId,
+                rescheduleStatus: RescheduleStatus.inactive,
+                trashCitizen: {
+                    some: {
+                        pickupStatus: PickupStatus.draft || PickupStatus.cancelled,
+                        createdAt: {
+                            gte: todayStart,
+                            lte: todayEnd,
+                        },
+                    },
+                },
+            },
+            select: {
+                userId: true,
+                fullName: true,
+                address: {
+                    select: {
+                        addressId: true,
+                        fullAddress: true,
+                        lat: true,
+                        lng: true,
+                    }
+                },
+                // trashCitizen: {
+                //     where: {
+                //         pickupStatus: PickupStatus.draft,
+                //         createdAt: {
+                //             gte: todayStart,
+                //             lte: todayEnd,
+                //         },
+                //     },
+                //     select: {
+                //         id: true,
+                //     }
+                // }
+            }
+        });
+    }
+
+    async getSelfInformation(userId: string): Promise<User | null> {
+        return await this.prisma.user.findFirst({
+            where: {
+                userId
+            },
+        })
+    }
+
 }
 
 export default UsersRepository;

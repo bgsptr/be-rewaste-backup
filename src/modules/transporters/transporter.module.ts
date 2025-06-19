@@ -4,7 +4,7 @@ import { TransporterService } from "src/core/services/transporters/transporter.s
 import { LoggerModule } from "src/infrastructure/logger/logger.module";
 import { TransporterMapper } from "src/application/mapper/transporter.mapper";
 import TransporterRepository from "src/infrastructure/postgres/repositories/transporter.repository";
-import TransporterVillageRepository from "src/infrastructure/postgres/repositories/transporter-village";
+import TransporterVillageRepository from "src/infrastructure/postgres/repositories/transporter-village.repository";
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import { CitizenMapper } from "src/application/mapper/citizen.mapper";
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
@@ -14,10 +14,13 @@ import { RatingModule } from "../rating/rating.module";
 import { CarModule } from "../cars/car.module";
 import CarService from "src/core/services/cars/car.service";
 import { AuthMiddleware } from "src/middlewares/auth.middleware";
+import VillageService from "src/core/services/villages/village.service";
+import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
+import { VillageMapper } from "src/application/mapper/village.mapper";
 
 @Module({
     imports: [LoggerModule, RatingModule, CarModule],
-    providers: [TransporterService, TransporterMapper, TransporterRepository, TransporterVillageRepository, UsersRepository, UserRoleRepository, CitizenMapper, AddressRepository, DriverService, CarService],
+    providers: [TransporterService, TransporterMapper, TransporterRepository, TransporterVillageRepository, UsersRepository, UserRoleRepository, CitizenMapper, AddressRepository, DriverService, CarService, VillageService, VillageRepository, VillageMapper],
     controllers: [TransporterController],
 })
 

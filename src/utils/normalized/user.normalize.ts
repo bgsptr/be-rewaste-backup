@@ -20,5 +20,7 @@ export const normalizeUserDefaults = (data: Partial<User>): User => {
         wasteFees: data.wasteFees ?? "",
         loyaltyId: data.loyaltyId ?? null,
         lastSeen: data.lastSeen ?? null,
+        rescheduleStopAt: data.rescheduleStopAt ?? null,
+        driverVillageId: data.driverVillageId ?? null,
     };
 }

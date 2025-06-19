@@ -58,6 +58,7 @@ model User {
   addressId             String?
   address               Address?                        @relation(fields: [addressId], references: [addressId])
   rescheduleStatus      RescheduleStatus                @default(inactive)
+  rescheduleStopAt      DateTime?
   transporterId         String?
   transporter           Transporter?                    @relation(fields: [transporterId], references: [id])
   villageId             String?
@@ -80,7 +81,11 @@ model User {
   car                   Car?
 
   verifiedVillages Village?                          @relation("VerificatorVillage")
+  
   Invoice          Invoice[]
+
+  driverVillageId       String?
+  driverVillage         Village?                     @relation("DriverVillage", fields: [driverVillageId], references: [id])
 }
 
 model Role {
@@ -101,8 +106,8 @@ model Point {
   pointId       String @id
   userId        String @unique
   user          User   @relation(fields: [userId], references: [userId])
-  lifetimePoint Float
-  remainPoint   Float
+  lifetimePoint Int
+  remainPoint   Int
 }
 
 model TrashType {
@@ -117,7 +122,7 @@ model Trash {
   createdAt      DateTime
   pickupRateTime Float?
   pickupStatus   PickupStatus
-  point          Float?
+  point          Int?
   verifyStatus   Boolean
   userDriverId   String?
   userDriver     User?                @relation("DriverTrash", fields: [userDriverId], references: [userId])
@@ -193,6 +198,8 @@ model Village {
   users              User[]               @relation("VillageUsers")
   transporterVillage TransporterVillage[]
   createdAt          DateTime             @default(now())
+
+  drivers               User[]     @relation("DriverVillage")
 }
 
 model VillageProfile {
@@ -233,8 +240,8 @@ model MaintenanceHistory {
 model Loyalty {
   loyaltyId    String           @id
   name         String
-  minimumPoint Float
-  maximumPoint String
+  minimumPoint Int
+  maximumPoint Int
   users        User[]
   benefits     LoyaltyBenefit[]
 }
@@ -243,7 +250,8 @@ model LoyaltyBenefit {
   benefitCode String    @id
   name        String
   description String
-  loyalty     Loyalty[]
+  tier      Loyalty @relation(fields: [tierId], references: [loyaltyId])
+  tierId    String
 }
 
 model Verification {
@@ -268,7 +276,7 @@ model Reward {
   id          String          @id
   name        String
   description String
-  point       Float
+  point       Int
   users       CitizenReward[]
 }
 
@@ -315,7 +323,7 @@ model TrashHasTrashType {
 model CitizenReward {
   userId        String
   rewardId      String
-  pointRequired Float
+  pointRequired Int
   name          String
   description   String
   user          User   @relation(fields: [userId], references: [userId])

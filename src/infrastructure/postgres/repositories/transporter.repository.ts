@@ -16,6 +16,27 @@ class TransporterRepository implements ITransporterRepository {
 
         return id;
     }
+
+    async getAllDriversOnlyId(transporterId: string) {
+        const { users } = await this.prisma.transporter.findFirstOrThrow({
+            where: {
+                id: transporterId,
+            },
+            select: {
+                users: {
+                    select: {
+                        userId: true,
+                        driverVillageId: true
+                    },
+                }
+            }
+        });
+
+        return users.map(user => ({
+            id: user.userId,
+            villageId: user.driverVillageId,
+        }));
+    }
 }
 
 export default TransporterRepository;

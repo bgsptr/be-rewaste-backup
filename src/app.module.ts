@@ -12,6 +12,10 @@ import { CarModule } from './modules/cars/car.module';
 import { UserModule } from './modules/users/user.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TrashModule } from './modules/trash/trash.module';
+import { PointModule } from './modules/points/point.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
+import { VerificatorModule } from './modules/verificator/verificator.module';
+import { PickupModule } from './modules/pickups/pickup.module';
 
 @Module({
   imports: [
@@ -30,6 +34,10 @@ import { TrashModule } from './modules/trash/trash.module';
     CarModule,
     UserModule,
     TrashModule,
+    PointModule,
+    LoyaltyModule,
+    VerificatorModule,
+    PickupModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [],

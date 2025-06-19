@@ -52,6 +52,27 @@ export class VillageService {
             transporterCount: village.transporterVillage.length,
         }))
     }
+
+    async getServiceAreaServedByTransporter(transporterId: string) {
+        const datas = await this.villageRepository.getVillageWithFamilyCountAndDriver(transporterId);
+        const totalAreaServed = datas.length;
+        const totalFamilyServed = datas.reduce((total, data) => total + data._count.users, 0);
+        const totalDriverAssigned = datas.reduce((total, data) => total + data._count.drivers, 0);
+        const mapNewArea = datas.map(data => ({
+            id: data.id,
+            totalDriver: data._count.drivers,
+            totalFamily: data._count.users,
+            name: data.villageName,
+            regency: data.regency,
+        }));
+
+        return {
+            totalAreaServed,
+            totalFamilyServed,
+            totalDriverAssigned,
+            villages: mapNewArea,
+        };
+    }
 }
 
 export default VillageService;

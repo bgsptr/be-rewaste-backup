@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { User } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { CreateDriverDto } from "src/application/dto/drivers/create_driver.dto";
+import { NotFoundException } from "src/core/exceptions/not-found.exception";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import RatingRepository from "src/infrastructure/postgres/repositories/rating.repository";
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
@@ -20,25 +22,34 @@ class DriverService {
     ) { }
 
     async addDriver(data: CreateDriverDto, transporterId?: string) {
-        // create account
-        const { name, email, phone, sim_number } = data;
-        const partialUser: Partial<User> = {
-            userId: generateIdForRole(RoleIdGenerate.driver),
-            fullName: name,
-            email,
-            phoneNumber: phone,
-            simNo: sim_number,
-            transporterId,
+        try {
+            // create account
+            const { name, email, phone, sim_number } = data;
+            const partialUser: Partial<User> = {
+                userId: generateIdForRole(RoleIdGenerate.driver),
+                fullName: name,
+                email,
+                phoneNumber: phone,
+                simNo: sim_number,
+                transporterId,
+            }
+
+            const password = await Hasher.hashPassword("driver123");
+
+            const userId = await this.userRepository.registerAccount(partialUser, password);
+
+            // add role to driver
+            await this.userRoleRepository.addRole(userId, roleNumber.DRIVER);
+
+            return userId;
         }
-
-        const password = await Hasher.hashPassword("driver123");
-
-        const userId = await this.userRepository.registerAccount(partialUser, password);
-
-        // add role to driver
-        await this.userRoleRepository.addRole(userId, roleNumber.DRIVER);
-
-        return userId;
+        catch (err) {
+            this.logger.error(err);
+            if (err instanceof PrismaClientKnownRequestError && err.code === "P2003") {
+                throw new NotFoundException("transporter", transporterId);
+            }
+            throw err;
+        }
     }
 
     async getAllDriversByTransporterId(transporterId: string) {

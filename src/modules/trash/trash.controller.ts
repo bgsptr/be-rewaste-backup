@@ -32,7 +32,18 @@ class TrashController {
         }
     }
 
-    @Get(":id")
+    @Get("/daily")
+    async getDailyTrashController(@FetchJWTPayload() payload: { id: string }) {
+        const data = await this.trashService.getDailyTrashInformation(payload.id);
+
+        return {
+            success: true,
+            message: `successfully fetch today trash for user with id ${payload.id}`,
+            data
+        }
+    }
+
+    @Get("/:id")
     async getTrashByIdController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string }) {
         this.logger.log(`GET /trash/${param.id}`);
         const data = await this.trashService.getTrashById(param.id, payload.id);

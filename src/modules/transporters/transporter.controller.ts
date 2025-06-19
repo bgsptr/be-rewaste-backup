@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
 import { CreateDriverDto } from "src/application/dto/drivers/create_driver.dto";
 import { CreateTransporterDto } from "src/application/dto/transporter/create_transporter.dto";
 import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
 import CarService from "src/core/services/cars/car.service";
 import DriverService from "src/core/services/drivers/driver.service";
 import { TransporterService } from "src/core/services/transporters/transporter.service";
+import VillageService from "src/core/services/villages/village.service";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import { FetchJWTPayload } from "src/shared/decorators/fetch-jwt-payload.decorator";
 import { GetVillageId } from "src/shared/decorators/get-village-id.decorator";
@@ -18,6 +19,7 @@ class TransporterController {
         private driverService: DriverService,
         private carService: CarService,
         private logger: LoggerService,
+        private villageService: VillageService,
     ) { }
 
     @Post()
@@ -42,7 +44,7 @@ class TransporterController {
         const isTransporter = roles.includes(roleNumber.TRANSPORTER);
 
         if (!isAdmin) {
-            if (isTransporter && transporterIdJWT !== param.id) {
+            if (isTransporter && String(transporterIdJWT) !== String(param.id)) {
                 throw new CustomForbidden();
             }
 
@@ -65,14 +67,14 @@ class TransporterController {
     }
 
     @Get("/:id/drivers")
-    async getAllDriverBasedTransporterController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }) {
+    async getAllDriverBasedTransporterController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }, @Query() qs: { available_only: boolean }) {
         // check if user neither admin nor correct transporter with payload jwt userId, throw forbidden
         const { id: transporterIdJWT, roles } = payload;
         const isAdmin = roles.includes(roleNumber.ADMIN);
         const isTransporter = roles.includes(roleNumber.TRANSPORTER);
 
         if (!isAdmin) {
-            if (isTransporter && transporterIdJWT !== param.id) {
+            if (isTransporter && String(transporterIdJWT) !== String(param.id)) {
                 throw new CustomForbidden();
             }
 
@@ -83,7 +85,9 @@ class TransporterController {
 
 
         // add dto
-        const drivers = await this.driverService.getAllDriversByTransporterId(param.id);
+        const driversNoFilter = await this.driverService.getAllDriversByTransporterId(param.id);
+
+        const drivers = qs.available_only ? driversNoFilter.filter(driver => driver?.driverVillageId === null) : driversNoFilter;
 
         return {
             success: true,
@@ -103,6 +107,58 @@ class TransporterController {
         const cars = await this.carService.getCarWithDriver();
 
         return cars;
+    }
+
+    @Post("/:id/villages")
+    async postAllVillagesController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }, @Body() data: { villageId: string, drivers: string[] }) {
+        const { id: transporterIdJWT, roles } = payload;
+        const isAdmin = roles.includes(roleNumber.ADMIN);
+        const isTransporter = roles.includes(roleNumber.TRANSPORTER);
+
+        if (!isAdmin) {
+            if (isTransporter && String(transporterIdJWT) !== String(param.id)) {
+                throw new CustomForbidden();
+            }
+
+            if (!isTransporter) {
+                throw new CustomForbidden();
+            }
+        }
+
+        await this.transporterService.addServiceArea({
+            transporterId: payload.id,
+            ...data,
+        });
+
+        return {
+            success: true,
+            message: "successfully add village and add driver to associated village",
+        }
+    }
+
+    @Get("/:id/villages")
+    async getServiceAreaController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }) {
+        const { id: transporterIdJWT, roles } = payload;
+        const isAdmin = roles.includes(roleNumber.ADMIN);
+        const isTransporter = roles.includes(roleNumber.TRANSPORTER);
+
+        if (!isAdmin) {
+            if (isTransporter && String(transporterIdJWT) !== String(param.id)) {
+                throw new CustomForbidden();
+            }
+
+            if (!isTransporter) {
+                throw new CustomForbidden();
+            }
+        }
+
+        const result = await this.villageService.getServiceAreaServedByTransporter(transporterIdJWT);
+
+        return {
+            success: true,
+            message: "service area fetched successfully",
+            result,
+        }
     }
 }
 

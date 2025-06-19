@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PickupStatus, Trash, TrashHasTrashType } from "@prisma/client";
 import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
+import { NotFoundException } from "src/core/exceptions/not-found.exception";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import TrashTypeMapRepository from "src/infrastructure/postgres/repositories/trash-type-map.repository";
 import TrashTypeRepository from "src/infrastructure/postgres/repositories/trash-type.repository";
@@ -19,7 +20,7 @@ class TrashService {
         private trashType: TrashTypeRepository,
     ) { }
 
-    @Cron(CronExpression.EVERY_12_HOURS)
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async generateRegularPickups() {
         this.logger.log("do cron for create trash job");
         try {
@@ -30,10 +31,11 @@ class TrashService {
                 return;
             }
 
-            const generatedTrashId = `WS-${generateIdWithNano()}`;
+            // const generatedTrashId = `WS-${generateIdWithNano()}`;
 
             const trashPickups = activeCitizens.filter(pickup => pickup.villageId && pickup.address?.addressId).map(
                 pickup => {
+                    const generatedTrashId = `WS-${generateIdWithNano()}`;
                     return {
                         verifyStatus: false,
                         pickupStatus: PickupStatus.draft,
@@ -59,6 +61,7 @@ class TrashService {
             const typeIds = await this.trashType.getAllTrashTypeIds();
 
             const data: TrashHasTrashType[] = typeIds.map(type => {
+                const generatedTrashId = `WS-${generateIdWithNano()}`;
                 return {
                     trashId: generatedTrashId,
                     trashTypeId: type.id,
@@ -121,6 +124,19 @@ class TrashService {
         } catch (err) {
             this.logger.error(err);
             throw new CustomForbidden();
+        }
+    }
+
+    async getDailyTrashInformation(userId: string) {
+        this.logger.log("get daily trash service");
+        try {
+            const data = await this.trashRepository.getLatestTrashOfTheOwner(userId);
+
+            return data;
+        } catch (err) {
+            this.logger.log("if not found should return not found exception");
+            this.logger.error(err);
+            throw new NotFoundException("trash");
         }
     }
 }

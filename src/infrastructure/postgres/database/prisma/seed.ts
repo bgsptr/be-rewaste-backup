@@ -9,76 +9,59 @@ async function main() {
   // Create roles
 
   // turn off
-  // await prisma.role.createMany({
-  //   data: [
-  //     { id: "1", name: 'citizen' },
-  //     { id: "2", name: 'verificator' },
-  //     { id: "3", name: 'driver' },
-  //     { id: "4", name: 'transporter' },
-  //     { id: "5", name: 'village' },
-  //     { id: "6", name: 'admin' },
-  //   ],
-  //   skipDuplicates: true,
-  // });
+  await prisma.role.createMany({
+    data: [
+      { id: "1", name: 'citizen' },
+      { id: "2", name: 'verificator' },
+      { id: "3", name: 'driver' },
+      { id: "4", name: 'transporter' },
+      { id: "5", name: 'village' },
+      { id: "6", name: 'admin' },
+    ],
+    skipDuplicates: true,
+  });
 
   // Create admin user
 
   // turn off kalo sudah pernah seed akun admin sebelumnya
-  // const { userId } = await prisma.user.create({
-  //   data: {
-  //     userId: generateIdForRole(RoleIdGenerate.admin),
-  //     fullName: "Admin Test",
-  //     email: "admin@example.com",
-  //     phoneNumber: "081234567890",
-  //     password: await Hasher.hashPassword("admin123"),
-  //     nik: "1234567890123456",
-  //     simNo: null,
-  //     qrCode: null,
-  //     addressId: null,
-  //     rescheduleStatus: "active",
-  //     transporterId: null,
-  //     villageId: null,
-  //     wasteFees: null,
-  //     loyaltyId: null,
-  //     accountStatus: "active",
-  //     lastSeen: new Date(),
-  //   }
-  // });
+  const { userId } = await prisma.user.create({
+    data: {
+      userId: generateIdForRole(RoleIdGenerate.admin),
+      fullName: "Admin Test",
+      email: "admin@example.com",
+      phoneNumber: "081234567890",
+      password: await Hasher.hashPassword("admin123"),
+      nik: "1234567890123456",
+      simNo: null,
+      qrCode: null,
+      addressId: null,
+      rescheduleStatus: "active",
+      transporterId: null,
+      villageId: null,
+      wasteFees: null,
+      loyaltyId: null,
+      accountStatus: "active",
+      lastSeen: new Date(),
+    }
+  });
 
-  // await prisma.userRoles.create({
-  //   data: {
-  //     userId,
-  //     roleId: roleNumber.ADMIN
-  //   }
-  // });
+  await prisma.userRoles.create({
+    data: {
+      userId,
+      roleId: roleNumber.ADMIN
+    }
+  });
 
   // Create loyalty tiers
   const loyaltyTiers = await prisma.loyalty.createMany({
     data: [
-      {
-        loyaltyId: 'LOY-BRONZE',
-        name: 'Bronze',
-        minimumPoint: 0,
-        maximumPoint: '499'
-      },
-      {
-        loyaltyId: 'LOY-SILVER',
-        name: 'Silver',
-        minimumPoint: 500,
-        maximumPoint: '999'
-      },
-      {
-        loyaltyId: 'LOY-GOLD',
-        name: 'Gold',
-        minimumPoint: 1000,
-        maximumPoint: '1999'
-      },
-      {
-        loyaltyId: 'LOY-PLATINUM',
-        name: 'Platinum',
-        minimumPoint: 2000,
-        maximumPoint: 'NO_LIMIT'
-      }
+      { loyaltyId: 'LOY-NOVICE', name: 'Eco Novice', minimumPoint: 0, maximumPoint: 99 },
+      { loyaltyId: 'LOY-ENTHUSIAST', name: 'Eco Enthusiast', minimumPoint: 100, maximumPoint: 249 },
+      { loyaltyId: 'LOY-WARRIOR', name: 'Eco Warrior', minimumPoint: 250, maximumPoint: 499 },
+      { loyaltyId: 'LOY-CHAMPION', name: 'Recycling Champion', minimumPoint: 500, maximumPoint: 899 },
+      { loyaltyId: 'LOY-HERO', name: 'Sustainability Hero', minimumPoint: 1000, maximumPoint: 1999 },
+      { loyaltyId: 'LOY-GUARDIAN', name: 'Earth Guardian', minimumPoint: 2000, maximumPoint: 4999 },
+      { loyaltyId: 'LOY-SAVIOR', name: 'Planet Savior', minimumPoint: 5000, maximumPoint: 99999999 },
     ],
     skipDuplicates: true
   });
@@ -87,50 +70,44 @@ async function main() {
   const benefits = await prisma.loyaltyBenefit.createMany({
     data: [
       {
-        benefitCode: 'BEN-001',
-        name: '5% Discount on Waste Fees',
-        description: 'Get 5% discount on monthly waste management fees'
+        benefitCode: 'BEN-WAR-001',
+        name: 'Diskon 10% untuk layanan pickup',
+        description: 'Diskon 10% untuk layanan pickup',
+        tierId: 'LOY-WARRIOR'
       },
       {
-        benefitCode: 'BEN-002',
-        name: 'Priority Pickup',
-        description: 'Your waste pickup requests get priority scheduling'
+        benefitCode: 'BEN-WAR-002',
+        name: 'Voucher belanja Rp50.000',
+        description: 'Dapatkan voucher belanja senilai Rp50.000',
+        tierId: 'LOY-WARRIOR'
       },
       {
-        benefitCode: 'BEN-003',
-        name: 'Exclusive Vouchers',
-        description: 'Access to exclusive partner vouchers and discounts'
+        benefitCode: 'BEN-WAR-003',
+        name: 'Prioritas pickup',
+        description: 'Permintaan pickup Anda akan diprioritaskan',
+        tierId: 'LOY-WARRIOR'
       },
       {
-        benefitCode: 'BEN-004',
-        name: 'Double Points Days',
-        description: 'Earn double points on selected days'
+        benefitCode: 'BEN-NOV-001',
+        name: 'Edukasi Daur Ulang Dasar',
+        description: 'Akses ke modul edukasi daur ulang untuk pemula',
+        tierId: 'LOY-NOVICE'
       },
       {
-        benefitCode: 'BEN-005',
-        name: 'Free Monthly Pickup',
-        description: 'One free premium waste pickup per month'
-      }
+        benefitCode: 'BEN-NOV-002',
+        name: 'Stiker Digital Eco Novice',
+        description: 'Dapatkan stiker digital untuk profil pengguna',
+        tierId: 'LOY-NOVICE'
+      },
+      {
+        benefitCode: 'BEN-NOV-003',
+        name: 'Notifikasi Pickup Lebih Cepat',
+        description: 'Mendapat notifikasi 1 hari sebelum jadwal pickup',
+        tierId: 'LOY-NOVICE'
+      },
     ],
     skipDuplicates: true
   });
-
-  const trashType = await prisma.trashType.createMany({
-    data: [
-      {
-        id: '1',
-        name: 'Organik'
-      },
-      {
-        id: '2',
-        name: 'Anorganik'
-      },
-      {
-        id: '3',
-        name: 'Residu'
-      }
-    ]
-  })
 
   console.log('Seeding completed successfully!');
 }

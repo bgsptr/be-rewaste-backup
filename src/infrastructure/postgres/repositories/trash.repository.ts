@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Trash } from "@prisma/client";
 import PrismaService from "src/core/services/prisma/prisma.service";
+import DayConvertion from "src/utils/static/dayjs";
 
 @Injectable()
 class TrashRepository {
@@ -15,7 +16,7 @@ class TrashRepository {
     }
 
     async getTrashOwner(trashId: string): Promise<string> {
-        const { userCitizenId } =  await this.prisma.trash.findFirstOrThrow({
+        const { userCitizenId } = await this.prisma.trash.findFirstOrThrow({
             where: {
                 id: trashId
             },
@@ -25,6 +26,55 @@ class TrashRepository {
         })
 
         return userCitizenId;
+    }
+
+    async getLatestTrashOfTheOwner(userId: string) {
+        const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
+        return await this.prisma.trash.findFirstOrThrow({
+            where: {
+                AND: {
+                    userCitizenId: userId,
+                    createdAt: {
+                        gte: todayStart,
+                        lte: todayEnd,
+                    }
+                }
+            },
+            select: {
+                id: true,
+                pickupStatus: true,
+                createdAt: true,
+                pickupAt: true,
+                userDriver: {
+                    select: {
+                        userId: true,
+                        fullName: true,
+                    }
+                },
+                verification: {
+                    select: {
+                        createdAt: true,
+                        verificatorUserId: true,
+                    }
+                },
+                point: true,
+                trashTypes: {
+                    select: {
+                        weight: true,
+                        trashTypeId: true,
+                        imageUrl: true,
+                        trashType: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
     }
 
     async getWithTypesById(trashId: string) {

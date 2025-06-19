@@ -23,8 +23,10 @@ export class CitizenMapper implements IMapper<CreateCitizenDto, User, ResponseCi
             accountStatus: AccountStatus.active,
             transporterId: transporterId,
             wasteFees: "",
-            loyaltyId: role === RoleIdGenerate.user ? "LOY-BRONZE" : null,
+            loyaltyId: role === RoleIdGenerate.user ? "LOY-NOVICE" : null,
             lastSeen: null,
+            rescheduleStopAt: null,
+            driverVillageId: null,
         };
     }
 

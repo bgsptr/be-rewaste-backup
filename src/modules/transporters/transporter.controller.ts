@@ -10,7 +10,6 @@ import { LoggerService } from "src/infrastructure/logger/logger.service";
 import { FetchJWTPayload } from "src/shared/decorators/fetch-jwt-payload.decorator";
 import { GetVillageId } from "src/shared/decorators/get-village-id.decorator";
 import { roleNumber } from "src/utils/enum/role.enum";
-import { generateIdForRole, RoleIdGenerate } from "src/utils/generator";
 
 @Controller("transporters")
 class TransporterController {
@@ -67,7 +66,7 @@ class TransporterController {
     }
 
     @Get("/:id/drivers")
-    async getAllDriverBasedTransporterController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }, @Query() qs: { available_only: boolean }) {
+    async getAllDriverBasedTransporterController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }, @Query() qs: { available_only?: string }) {
         // check if user neither admin nor correct transporter with payload jwt userId, throw forbidden
         const { id: transporterIdJWT, roles } = payload;
         const isAdmin = roles.includes(roleNumber.ADMIN);
@@ -85,18 +84,18 @@ class TransporterController {
 
 
         // add dto
-        const driversNoFilter = await this.driverService.getAllDriversByTransporterId(param.id);
+        const driversNoFilter = await this.driverService.getAllDriversByTransporterId(param.id, qs.available_only);
+        this.logger.log(driversNoFilter);
 
-        const drivers = qs.available_only ? driversNoFilter.filter(driver => driver?.driverVillageId === null) : driversNoFilter;
+        // const drivers = qs.available_only ? driversNoFilter.filter(driver => driver?.driverVillageId === null) : driversNoFilter;
 
         return {
             success: true,
             message: `successfully fetch all driver from transporter with id ${param.id}`,
             data: {
-                drivers
+                drivers: driversNoFilter
             }
         }
-
     }
 
     @Get("/:id/cars")

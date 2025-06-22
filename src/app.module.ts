@@ -16,6 +16,8 @@ import { PointModule } from './modules/points/point.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { VerificatorModule } from './modules/verificator/verificator.module';
 import { PickupModule } from './modules/pickups/pickup.module';
+import { HttpModule } from '@nestjs/axios';
+import { RouteModule } from './modules/routes/route.module';
 
 @Module({
   imports: [
@@ -38,6 +40,14 @@ import { PickupModule } from './modules/pickups/pickup.module';
     LoyaltyModule,
     VerificatorModule,
     PickupModule,
+    RouteModule,
+    HttpModule.register({
+      baseURL: 'https://api.openrouteservice.org',
+      timeout: 10000,
+      headers: {
+        Authorization: process.env.ORS_API_KEY,
+      },
+    }),
     ScheduleModule.forRoot(),
   ],
   controllers: [],

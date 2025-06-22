@@ -1,7 +1,11 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
+import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
+import { RolesGuard } from "src/core/guards/roles.guard";
 import TrashService from "src/core/services/trash/trash.service";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import { FetchJWTPayload } from "src/shared/decorators/fetch-jwt-payload.decorator";
+import { Roles } from "src/shared/decorators/roles.decorator";
+import { roleNumber } from "src/utils/enum/role.enum";
 
 @Controller("trash")
 class TrashController {
@@ -43,6 +47,8 @@ class TrashController {
         }
     }
 
+    @Roles(roleNumber.CITIZEN)
+    @UseGuards(RolesGuard)
     @Get("/:id")
     async getTrashByIdController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string }) {
         this.logger.log(`GET /trash/${param.id}`);
@@ -51,6 +57,35 @@ class TrashController {
             success: true,
             message: `trash with id: ${param.id} fetched successfully`,
             data,
+        }
+    }
+
+    // guard for only driver role
+    @Roles(roleNumber.DRIVER)
+    @UseGuards(RolesGuard)
+    @Patch("/:id/pickup")
+    async driverScanTrashQRCodeController(@FetchJWTPayload() payload: { id: string }, @Param() param: { id: string }) {
+        const { id: trashId } = param;
+        await this.trashService.updateTrashStatusToNeedVerify(trashId, payload.id);
+
+        return {
+            success: true,
+            message: `success update status after pickup trash with id ${trashId}`,
+        }
+    }
+
+    @Roles(roleNumber.DRIVER)
+    @UseGuards(RolesGuard)
+    // driver role
+    @Patch("/:id/scheduled")
+    async driverClickStartInPickupListController(@FetchJWTPayload() payload: { id: string }, @Param() param: { id: string }) {
+        const { id: trashId } = param;
+        if (!payload) throw new CustomForbidden();
+        await this.trashService.updateStatusToSchedule(trashId);
+
+        return {
+            success: true,
+            message: `success update status after pickup trash with id ${trashId}`,
         }
     }
 }

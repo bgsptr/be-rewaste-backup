@@ -87,6 +87,12 @@ class TrashRepository {
                 pickupStatus: true,
                 createdAt: true,
                 pickupAt: true,
+                userCitizen: {
+                    select: {
+                        userId: true,
+                        villageId: true,
+                    }
+                },
                 userDriver: {
                     select: {
                         userId: true,
@@ -141,6 +147,96 @@ class TrashRepository {
         });
     }
 
+    async updatePickupStatusById(trashId: string, selectedStatus: PickupStatus) {
+        await this.prisma.trash.update({
+            where: {
+                pickupStatus: PickupStatus.scheduled,
+                id: trashId,
+            },
+            data: {
+                pickupStatus: selectedStatus
+            }
+        })
+    }
+
+    async getTrashByBatching(trashIds: string[]) {
+        return await this.prisma.trash.findMany({
+            where: {
+                id: {
+                    in: trashIds,
+                },
+            },
+            select: {
+                id: true,
+                verifyStatus: true,
+                userCitizen: {
+                    select: {
+                        userId: true,
+                        address: true
+                    }
+                }
+            }
+        })
+    }
+
+    async getTrashTodayFromSelectedVillage(villageId: string) {
+        const { todayStart: gte, todayEnd: lte } = DayConvertion.getStartAndEndForToday();
+        return await this.prisma.trash.findMany({
+            where: {
+                // kalo mau tambahin created at
+                // pickupStatus: PickupStatus.draft,
+                createdAt: {
+                    gte,
+                    lte,
+                },
+                userCitizen: {
+                    villageId,
+                }
+            },
+            include: {
+                userCitizen: {
+                    select: {
+                        address: true,
+                    }
+                },
+                userDriver: {
+                    select: {
+                        transporterId: true,
+                    }
+                }
+            }
+        })
+    }
+    
+    async bulkUpdateStatusAndDriver(
+        mapping: { id: string, driverId: string }[],
+    ) {
+        const byDriver = new Map<string, string[]>();
+
+        for (const { id, driverId } of mapping) {
+            if (!byDriver.has(driverId)) {
+                byDriver.set(driverId, []);
+            }
+            byDriver.get(driverId)!.push(id);
+        }
+
+        await Promise.all(
+            Array.from(byDriver.entries()).map(([driverId, ids]) => {
+                if (ids.length === 0) return Promise.resolve();
+                return this.prisma.trash.updateMany({
+                    where: {
+                        id: { in: ids },
+                    },
+                    data: {
+                        pickupStatus: PickupStatus.scheduled,
+                        userDriverId: driverId,
+                    },
+                });
+            })
+        );
+    }
+
+
     // async getAllTrashAndCitizenWithStatusInProgress() {
     //     const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
     //     return await this.prisma.trash.findMany({
@@ -154,7 +250,7 @@ class TrashRepository {
     //         select: {
     //             userCitizen: {
     //                 select: {
-                        
+
     //                 }
     //             }
     //         }

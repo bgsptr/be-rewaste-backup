@@ -15,6 +15,14 @@ class TransporterVillageRepository implements ITransporterVillageRepository {
             data
         });
     }
+
+    async countByTransporterOfVillage(villageId: string): Promise<number> {
+        return await this.prisma.transporterVillage.count({
+            where: {
+                villageId,
+            }
+        })
+    }
 }
 
 export default TransporterVillageRepository;

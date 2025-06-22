@@ -259,7 +259,7 @@ model Verification {
   createdAt         String
   verificatorUserId String
   verificator       User    @relation("Verificator", fields: [verificatorUserId], references: [userId])
-  trashId           String
+  trashId           String  // @unique
   trash             Trash   @relation(fields: [trashId], references: [id])
   verifyRateTime    Float
   status            Boolean

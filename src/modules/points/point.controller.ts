@@ -8,7 +8,7 @@ class PointController {
         private pointService: PointService,
     ) {}
 
-    @Get("overview")
+    @Get("/overview")
     async getPointOverviewController(@FetchJWTPayload() payload: { id: string }) {
         const data = await this.pointService.getOverview(payload.id);
         return {

@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { Address, User } from "@prisma/client";
 import { Repository } from "src/core/base/repository";
 
 export interface IUserRepository extends Repository<User> {
@@ -14,4 +14,5 @@ export interface IUserRepository extends Repository<User> {
     associateAllDriverToSelectedVillage(drivers: string[], driverVillageId: string): Promise<void>;
     getActiveCitizensWithTodayDraftTrash(villageId: string): Promise<any>;
     getSelfInformation(userId: string): Promise<User | null>;
+    findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string }[]>;
 }

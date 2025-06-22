@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { User } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { CreateDriverDto } from "src/application/dto/drivers/create_driver.dto";
+import { CustomBadRequest } from "src/core/exceptions/custom-bad-request.exception";
 import { NotFoundException } from "src/core/exceptions/not-found.exception";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import RatingRepository from "src/infrastructure/postgres/repositories/rating.repository";
@@ -52,21 +53,29 @@ class DriverService {
         }
     }
 
-    async getAllDriversByTransporterId(transporterId: string) {
-        const drivers = await this.userRepository.getDriverByTransporter(transporterId);
+    async getAllDriversByTransporterId(transporterId: string, available?: string) {
+        if (available !== "true" && available !== "false") throw new CustomBadRequest(`Query parameter 'available_only' must be either 'true' or 'false'`);
+        const availableOnly = available === "true" ? true : available === "false" && false;
+        // const availableOnly = available === "true" ? true : available === "false" ? false : true;
+        const drivers = await this.userRepository.getDriverByTransporter(transporterId, availableOnly);
+
+        // this.logger.debug(drivers);
 
         const driverIds = drivers.map(driver => driver.userId);
 
         const groupedRatings = await this.ratingRepository.getAvgRatingByExistDriver(driverIds);
         return drivers.map(driver => {
             const rolesOnly = driver.roles.map(role => role.roleId);
+            this.logger.debug(rolesOnly);
             if (!rolesOnly.includes(roleNumber.DRIVER)) return null;
+            this.logger.debug(driver);
             const { password, nik, rescheduleStatus, wasteFees, loyaltyId, qrCode, roles, ...restOfAttribute } = driver;
 
             const found = groupedRatings.find(group => group.userDriverId === driver.userId);
             const now = DayConvertion.getCurrent();
             const createdAt = DayConvertion.getTarget(driver.createdAt);
             const yearExp = DayConvertion.getDiffOfYear(now, createdAt);
+            this.logger.debug(restOfAttribute);
             return {
                 ...restOfAttribute,
                 score: found?._avg.ratingScore ?? null,

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { AccountStatus, PickupStatus, RescheduleStatus, User } from "@prisma/client";
+import { AccountStatus, Address, PickupStatus, RescheduleStatus, User } from "@prisma/client";
 import { CustomConflict } from "src/core/exceptions/custom-conflict.exception";
 import { IUserRepository } from "src/core/interfaces/repositories/users.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
@@ -119,7 +119,7 @@ class UsersRepository implements IUserRepository {
         })
     }
 
-    async getDriverByTransporter(id: string) {
+    async getDriverByTransporter(id: string, addressIsNull: boolean = false) {
         return await this.prisma.user.findMany({
             include: {
                 car: {
@@ -127,10 +127,14 @@ class UsersRepository implements IUserRepository {
                         id: true,
                     }
                 },
+                address: true,
                 roles: true
             },
             where: {
-                transporterId: id
+                transporterId: id,
+                address: addressIsNull ? null : {
+                    isNot: null
+                }
             }
         })
     }
@@ -215,6 +219,31 @@ class UsersRepository implements IUserRepository {
         });
     }
 
+    async findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string }[]> {
+        const datas = await this.prisma.user.findMany({
+            where: {
+                villageId,
+                addressId: {
+                    not: null
+                },
+                roles: {
+                    some: {
+                        roleId: roleNumber.CITIZEN
+                    }
+                }
+            },
+            select: {
+                address: true,
+                userId: true
+            }
+        });
+
+        return datas.map(data => ({
+            addresses: data.address as Address,
+            userId: data.userId,
+        }));
+    }
+
     async getSelfInformation(userId: string): Promise<User | null> {
         return await this.prisma.user.findFirst({
             where: {
@@ -222,6 +251,7 @@ class UsersRepository implements IUserRepository {
             },
         })
     }
+
 
 }
 

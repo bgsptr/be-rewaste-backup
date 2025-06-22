@@ -6,10 +6,11 @@ import TrashRepository from "src/infrastructure/postgres/repositories/trash.repo
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import TrashController from "./trash.controller";
 import { AuthMiddleware } from "src/middlewares/auth.middleware";
+import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 
 @Module({
     controllers: [TrashController],
-    providers: [TrashService, TrashRepository, UsersRepository, TrashTypeRepository, TrashTypeMapRepository]
+    providers: [TrashService, TrashRepository, UsersRepository, TrashTypeRepository, TrashTypeMapRepository, VillageRepository]
 })
 
 export class TrashModule implements NestModule {

@@ -10,6 +10,17 @@ class VillageRepository implements IVillageRepository {
         private readonly prisma: PrismaService
     ) { }
 
+    async getById(id: string): Promise<{ id: string } | null> {
+        return await this.prisma.village.findFirst({
+            where: {
+                id,
+            },
+            select: {
+                id: true
+            }
+        })
+    }
+
     async addVillage(data: Village): Promise<string> {
         const { id: villageId, villageName, province, district, regency, description, status } = data;
         const { id } = await this.prisma.village.create({
@@ -70,6 +81,20 @@ class VillageRepository implements IVillageRepository {
                 },
             }
         })
+    }
+
+    async getAssignedVerificatorByVilageId(villageId: string): Promise<string | null> {
+        const result = await this.prisma.village.findFirstOrThrow({
+            where: {
+                id: villageId,
+            },
+            select: {
+                userVerificatorId: true,
+            }
+        })
+        const userVerificatorId = result?.userVerificatorId;
+
+        return userVerificatorId;
     }
 
     // async getAllCitizensWithAddressInformation(villageId: string) {

@@ -134,8 +134,23 @@ class UsersRepository implements IUserRepository {
                 transporterId: id,
                 address: addressIsNull ? null : {
                     isNot: null
+                },
+                roles: {
+                    some: {
+                        roleId: roleNumber.DRIVER,
+                    }
                 }
             }
+            // where: {
+            //     transporterId: id,
+            //     ...(addressIsNull ? {
+            //         address: null
+            //     } : {
+            //         NOT: {
+            //             address: null
+            //         }
+            //     })
+            // }
         })
     }
 

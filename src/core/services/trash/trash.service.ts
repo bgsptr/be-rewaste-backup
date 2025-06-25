@@ -24,7 +24,8 @@ class TrashService {
         private trashType: TrashTypeRepository,
     ) { }
 
-    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    // @Cron(CronExpression.EVERY_MINUTE)
+    @Cron(CronExpression.EVERY_10_HOURS)
     async generateRegularPickups() {
         this.logger.log("do cron for create trash job");
         try {

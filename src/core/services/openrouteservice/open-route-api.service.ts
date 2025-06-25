@@ -42,4 +42,10 @@ export class OpenRouteAPIService {
         );
         return response.data;
     }
+
+    async calculateMatrixDistanceTotalAndTime() {
+        // const response = await firstValueFrom(
+        //     this.httpService.
+        // )
+    }
 }

@@ -12,6 +12,9 @@ import TrashRepository from "src/infrastructure/postgres/repositories/trash.repo
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 import { generateId, generateIdWithNano } from "src/utils/generator";
+import { OpenRouteAPIService } from "../openrouteservice/open-route-api.service";
+import { CustomConflict } from "src/core/exceptions/custom-conflict.exception";
+import DayConvertion from "src/utils/static/dayjs";
 
 @Injectable()
 class TrashService {
@@ -22,6 +25,7 @@ class TrashService {
         private logger: LoggerService,
         private trashTypeMap: TrashTypeMapRepository,
         private trashType: TrashTypeRepository,
+        private ors: OpenRouteAPIService,
     ) { }
 
     // @Cron(CronExpression.EVERY_MINUTE)
@@ -103,7 +107,6 @@ class TrashService {
             const verificator = verification?.verificatorUserId && await this.userRepository.getVerificatorDataById(verification[0].verificatorUserId);
             this.logger.debug(verificator);
 
-
             const data = {
                 ...rest,
                 driver: {
@@ -174,10 +177,32 @@ class TrashService {
         }
     }
 
-    async updateStatusToSchedule(trashId: string) {
+    async updateStatusToSchedule(trashId: string, driverId: string) {
         try {
-            const { id, pickupStatus } = await this.trashRepository.getWithTypesById(trashId);
+
+            // verifikasi jika ada sampah terakhir yg diangkut gunakan titik itu, jika pertama kali ambil titik alamat driver
+            const lastTrashPickup = await this.trashRepository.getAssignedLastForTodayWithDriverId(driverId);
+            const driver = await this.userRepository.getDriverById(driverId);
+            const { id, pickupStatus, userCitizen, userDriver } = await this.trashRepository.getWithTypesById(trashId);
+            if (userDriver) throw new CustomConflict('trash', '', 'trash already assigned');
             if (pickupStatus !== PickupStatus.generated) throw new CustomBadRequest(`failed to pickup, due the trash is not in draft status`);
+            if ( !userCitizen.address || !driver.address ) throw new CustomBadRequest("either citizen or driver did not add the address before");
+            const { lat: citizenLat, lng: citizenLng } = userCitizen.address;
+            const { lat: driverLat, lng: driverLng } = driver.address;
+            const startLocation = lastTrashPickup ? {
+                lat: lastTrashPickup.userCitizen.address && lastTrashPickup.userCitizen.address.lat || '',
+                lng: lastTrashPickup.userCitizen.address && lastTrashPickup.userCitizen.address.lng || '',
+            } : {
+                lat: driverLat,
+                lng: driverLng,
+            }
+
+            if (!startLocation.lat || !startLocation.lng) throw new CustomBadRequest('')
+            const result = await this.ors.calculateTwoPinpointWithDistanceAPI(startLocation, { lat: citizenLat, lng: citizenLng });
+            // const { distance, duration } = result.routes.summary; //POST
+            const { distance, duration } = result.features[0].properties.segments[0];
+            const estimatePickupAt = DayConvertion.getCurrent().add(duration, 'second').toDate();
+            await this.trashRepository.updateTrashDetailById(trashId, distance, duration, estimatePickupAt)
             await this.trashRepository.updatePickupStatusById(id, PickupStatus.assigned);
         } catch (err) {
             this.logger.error(err);

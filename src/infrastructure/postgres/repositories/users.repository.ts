@@ -315,6 +315,7 @@ class UsersRepository implements IUserRepository {
                 accountStatus: true,
                 simNo: true,
                 lastSeen: true,
+                address: true,
                 car: {
                     select: {
                         id: true,

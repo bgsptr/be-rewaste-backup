@@ -28,6 +28,11 @@ export interface OptimizationRequest {
     vehicles: Vehicle[];
 }
 
+export interface PinpointLocation {
+    lat: string;
+    lng: string;
+}
+
 @Injectable()
 export class OpenRouteAPIService {
     constructor(private readonly httpService: HttpService) { }
@@ -39,6 +44,15 @@ export class OpenRouteAPIService {
                     Authorization: process.env.ORS_API_KEY,
                 }
             })
+        );
+        return response.data;
+    }
+
+    async calculateTwoPinpointWithDistanceAPI(startPin: PinpointLocation, endPin: PinpointLocation) {
+        const apiKey = process.env.ORS_API_KEY;
+
+        const response = await firstValueFrom(
+            this.httpService.get(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${startPin.lng},${startPin.lat}&end=${endPin.lng},${endPin.lat}`)
         );
         return response.data;
     }

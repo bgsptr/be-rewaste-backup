@@ -94,7 +94,7 @@ class TrashController {
     async driverClickStartInPickupListController(@FetchJWTPayload() payload: { id: string }, @Param() param: { id: string }) {
         const { id: trashId } = param;
         if (!payload) throw new CustomForbidden();
-        await this.trashService.updateStatusToSchedule(trashId);
+        await this.trashService.updateStatusToSchedule(trashId, payload.id);
 
         return {
             success: true,

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PickupStatus, Trash, TrashHasTrashType, Verification } from "@prisma/client";
+import { JoinStatus, PickupStatus, Trash, TrashHasTrashType, Verification } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { CustomBadRequest } from "src/core/exceptions/custom-bad-request.exception";
 import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
@@ -184,6 +184,25 @@ class TrashService {
             if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") throw new NotFoundException("trash", trashId);
             throw err;
         }
+    }
+
+    async getDailyPickupList(userId: string) {
+
+        // const villageId = await this.userRepository.getAssignedVillageId(userId);
+        // if (!villageId) throw new NotFoundException("trash");
+
+        const user = await this.userRepository.getSelfInformation(userId);
+        if (!user?.driverVillageId || !user.transporterId) throw new NotFoundException("transporter");
+        const { driverVillageId, transporterId } = user;
+        const linked = await this.villageRepository.getLinkedProposal(transporterId, driverVillageId);
+        this.logger.debug(linked);
+
+        if (linked?.transporterVillage[0].joinStatus !== JoinStatus.Accepted) throw new NotFoundException("trash");
+        const trashList = await this.trashRepository.getTrashTodayFromSelectedVillage(linked.transporterVillage[0].villageId);
+
+        this.logger.debug(trashList);
+
+        return trashList;
     }
 }
 

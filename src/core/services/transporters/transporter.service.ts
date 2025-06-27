@@ -125,6 +125,6 @@ export class TransporterService {
     }
 
     async updateByAddDriverInSelectedServiceArea(data: VillageDriver) {
-        // await 
+
     }
 }

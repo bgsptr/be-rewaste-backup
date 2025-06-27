@@ -1,7 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { JoinStatus, User } from "@prisma/client";
+import { IAssignTransporterRequest } from "src/application/dto/transporter-request/transporter-request.dto";
 import { CreateVillageDto } from "src/application/dto/villages/create_village.dto";
 import { VillageMapper } from "src/application/mapper/village.mapper";
+import { CustomConflict } from "src/core/exceptions/custom-conflict.exception";
+import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
+import { NotFoundException } from "src/core/exceptions/not-found.exception";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import TransporterVillageRepository from "src/infrastructure/postgres/repositories/transporter-village.repository";
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
@@ -9,6 +13,12 @@ import UsersRepository from "src/infrastructure/postgres/repositories/users.repo
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 import { roleNumber } from "src/utils/enum/role.enum";
 import { Hasher } from "src/utils/static/hasher";
+
+interface TransporterRequestServiceParameter {
+    villageId: string;
+    transporterId: string;
+    status: IAssignTransporterRequest
+}
 
 @Injectable()
 export class VillageService {
@@ -86,8 +96,16 @@ export class VillageService {
         };
     }
 
-    async receiveTransporterRequestToBeenAddedInServiceArea() {
-        // await this.transporterVillageRepository.updateStatus();
+    async receiveTransporterRequestToBeenAddedInServiceArea(data: TransporterRequestServiceParameter) {
+        const { status: bodyContainingStatus, villageId, transporterId } = data;
+
+        const isLinked = await this.transporterVillageRepository.get(transporterId, villageId);
+        if (!isLinked) throw new NotFoundException('linked-transporter-village');
+        // if (isLinked && isLinked.joinStatus !== JoinStatus.Pending) throw new CustomConflict('transporter-village', '', 'status of proposal must be a pending');
+        // this.logger.debug(bodyContainingStatus); //"Accepted"
+        const statusDefined = bodyContainingStatus as unknown === JoinStatus.Accepted;
+        this.logger.debug(statusDefined);
+        await this.transporterVillageRepository.updateStatus(statusDefined, transporterId, villageId);
     }
 }
 

@@ -191,11 +191,12 @@ class TrashRepository {
                 },
                 userCitizen: {
                     villageId,
-                }
+                },
             },
             include: {
                 userCitizen: {
                     select: {
+                        // villageId: true,
                         address: true,
                     }
                 },

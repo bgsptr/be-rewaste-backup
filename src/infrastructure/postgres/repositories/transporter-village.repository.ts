@@ -10,6 +10,15 @@ class TransporterVillageRepository implements ITransporterVillageRepository {
         private prisma: PrismaService, 
     ) {}
 
+    async get(transporterId: string, villageId: string): Promise<TransporterVillage | null> {
+        return await this.prisma.transporterVillage.findFirst({
+            where: {
+                transporterId,
+                villageId,
+            }
+        })
+    }
+
     async create(data: TransporterVillage): Promise<void> {
         await this.prisma.transporterVillage.create({
             data
@@ -28,7 +37,7 @@ class TransporterVillageRepository implements ITransporterVillageRepository {
         await this.prisma.transporterVillage.update({
             data: {
                 joinStatus: status ? JoinStatus.Accepted : JoinStatus.Rejected,
-                linkedAt: new Date(),
+                linkedAt: status ? new Date() : null,
             },
             where: {
                 transporterId_villageId: {

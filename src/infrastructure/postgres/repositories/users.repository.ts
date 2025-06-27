@@ -13,6 +13,32 @@ class UsersRepository implements IUserRepository {
         private prisma: PrismaService
     ) { }
 
+    // async getTransporterOfDriver(driverId: string) {
+    //     const driver = await this.prisma.user.findFirstOrThrow({
+    //         where: {
+    //             userId: driverId,
+    //         },
+    //         select: {
+    //             transporterId: true,
+    //         }
+    //     })
+
+    //     return driver.transporterId;
+    // }
+
+    async getAssignedVillageId(userId: string) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                userId
+            },
+            select: {
+                driverVillageId: true
+            }
+        });
+
+        return user?.driverVillageId ?? null;
+    }
+
     async getVerificatorDataById(verificatorId: string): Promise<User | null> {
         const user = await this.prisma.user.findFirst({
             where: {

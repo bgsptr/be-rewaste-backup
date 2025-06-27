@@ -14,6 +14,19 @@ class TrashController {
         private logger: LoggerService,
     ) { }
 
+    @Get("pickup-list")
+    async listAllPickupsController(@FetchJWTPayload() payload: { id: string }) {
+        const pickupList = await this.trashService.getDailyPickupList(payload.id);
+
+        return {
+            success: true,
+            message: "successfully fetch all pickup list",
+            result: {
+                pickupList,
+            }
+        }
+    }
+
     @Get()
     async getAllHistoryTrashOfUser(@FetchJWTPayload() payload: { id: string }) {
         // bisa pagination filter by per month;

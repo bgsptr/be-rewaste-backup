@@ -104,6 +104,18 @@ class VillageRepository implements IVillageRepository {
         return userVerificatorId;
     }
 
+    async getLinkedProposal(transporterId: string, villageId: string) {
+        return this.prisma.village.findUnique({
+            where: { id: villageId },
+            select: {
+                transporterVillage: {
+                    where: { transporterId },
+                    select: { joinStatus: true, villageId: true },
+                },
+            },
+        });
+    }
+
     // async getAllCitizensWithAddressInformation(villageId: string) {
     //     const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
     //     return await this.prisma.village.findUnique({

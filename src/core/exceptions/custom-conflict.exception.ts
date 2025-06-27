@@ -2,10 +2,10 @@ import { HttpStatus } from '@nestjs/common';
 import { DomainException } from './domain.exception';
 
 export class CustomConflict extends DomainException {
-  constructor(entityName: string, identifier?: string) {
+  constructor(entityName: string, identifier?: string, customMessage?: string) {
     const message = identifier
       ? `${entityName} with this ${identifier} already exists`
       : `${entityName} already exists`;
-    super(message, HttpStatus.CONFLICT);
+    super(customMessage  || message, HttpStatus.CONFLICT);
   }
 }

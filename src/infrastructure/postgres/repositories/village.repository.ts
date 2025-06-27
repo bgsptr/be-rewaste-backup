@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { PickupStatus, RescheduleStatus, Village } from "@prisma/client";
+import { JoinStatus, PickupStatus, RescheduleStatus, Village } from "@prisma/client";
 import { IVillageRepository } from "src/core/interfaces/repositories/village.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
 import DayConvertion from "src/utils/static/dayjs";
@@ -61,6 +61,8 @@ class VillageRepository implements IVillageRepository {
                 transporterVillage: {
                     some: {
                         transporterId,
+                        // filter yg sudah melakukan kerjasama
+                        // joinStatus: JoinStatus.Accepted,
                     }
                 }
             },
@@ -69,6 +71,11 @@ class VillageRepository implements IVillageRepository {
                 villageName: true,
                 regency: true,
                 transporterVillage: {
+                    select: {
+                        transporterId: true,
+                        linkedAt: true,
+                        joinStatus: true,
+                    },
                     where: {
                         transporterId,
                     },

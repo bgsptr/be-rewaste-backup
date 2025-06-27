@@ -43,13 +43,14 @@ class TrashService {
                     const generatedTrashId = `WS-${generateIdWithNano()}`;
                     return {
                         verifyStatus: false,
-                        pickupStatus: PickupStatus.draft,
+                        pickupStatus: PickupStatus.generated,
                         createdAt: new Date(),
                         id: generatedTrashId,
                         userCitizenId: pickup.userId,
                         userDriverId: null,
-                        pickupAt: null,
+                        actualPickupAt: null,
                         pickupRateTime: null,
+                        estimatePickupAt: null,
                         point: null,
                         rescheduleNote: null,
                     } as Trash;
@@ -98,7 +99,8 @@ class TrashService {
 
             // ganti relasi one user (verificator) to one trash entity
 
-            const verificator = verification.length && await this.userRepository.getVerificatorDataById(verification[0].verificatorUserId);
+            // coba debug
+            const verificator = verification?.verificatorUserId && await this.userRepository.getVerificatorDataById(verification[0].verificatorUserId);
             this.logger.debug(verificator);
 
 
@@ -111,7 +113,7 @@ class TrashService {
                 verificator: verificator ? {
                     id: verificator?.userId,
                     name: verificator?.fullName,
-                    verifyAt: verification[0].createdAt ?? null,
+                    verifyAt: verification?.createdAt ?? null,
                 } : {},
                 weightTotal: trashTypes.reduce((total, tType) => total + tType.weight, 0),
                 trashTypes: trashTypes.map(type => ({
@@ -148,10 +150,10 @@ class TrashService {
     async updateTrashStatusToNeedVerify(trashId: string, driverId: string) {
         try {
             const { id, pickupStatus, userDriver, userCitizen } = await this.trashRepository.getWithTypesById(trashId);
-            if (pickupStatus !== PickupStatus.scheduled) throw new CustomBadRequest(`failed to pickup, due the trash is not scheduled to any driver`);
+            if (pickupStatus !== PickupStatus.assigned) throw new CustomBadRequest(`failed to pickup, due the trash is not scheduled to any driver`);
             if (userDriver && userDriver.userId !== driverId) throw new CustomForbidden(`cannot access anyone pickups`);
 
-            await this.trashRepository.updatePickupStatusById(trashId, PickupStatus.in_progress);
+            await this.trashRepository.updatePickupStatusById(trashId, PickupStatus.verifying);
 
             if (!userCitizen.villageId) throw new NotFoundException("trash associated with village");
             const verificatorUserId = await this.villageRepository.getAssignedVerificatorByVilageId(userCitizen.villageId);
@@ -175,8 +177,8 @@ class TrashService {
     async updateStatusToSchedule(trashId: string) {
         try {
             const { id, pickupStatus } = await this.trashRepository.getWithTypesById(trashId);
-            if (pickupStatus !== PickupStatus.draft) throw new CustomBadRequest(`failed to pickup, due the trash is not in draft status`);
-            await this.trashRepository.updatePickupStatusById(id, PickupStatus.scheduled);
+            if (pickupStatus !== PickupStatus.generated) throw new CustomBadRequest(`failed to pickup, due the trash is not in draft status`);
+            await this.trashRepository.updatePickupStatusById(id, PickupStatus.assigned);
         } catch (err) {
             this.logger.error(err);
             if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") throw new NotFoundException("trash", trashId);

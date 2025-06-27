@@ -18,6 +18,7 @@ import { VerificatorModule } from './modules/verificator/verificator.module';
 import { PickupModule } from './modules/pickups/pickup.module';
 import { HttpModule } from '@nestjs/axios';
 import { RouteModule } from './modules/routes/route.module';
+import { DriverModule } from './modules/drivers/driver.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RouteModule } from './modules/routes/route.module';
     VerificatorModule,
     PickupModule,
     RouteModule,
+    DriverModule,
     HttpModule.register({
       baseURL: 'https://api.openrouteservice.org',
       timeout: 10000,

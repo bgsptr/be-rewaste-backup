@@ -44,7 +44,7 @@ class TrashRepository {
                 id: true,
                 pickupStatus: true,
                 createdAt: true,
-                pickupAt: true,
+                actualPickupAt: true,
                 userDriver: {
                     select: {
                         userId: true,
@@ -86,7 +86,7 @@ class TrashRepository {
                 id: true,
                 pickupStatus: true,
                 createdAt: true,
-                pickupAt: true,
+                actualPickupAt: true,
                 userCitizen: {
                     select: {
                         userId: true,
@@ -150,7 +150,7 @@ class TrashRepository {
     async updatePickupStatusById(trashId: string, selectedStatus: PickupStatus) {
         await this.prisma.trash.update({
             where: {
-                pickupStatus: PickupStatus.scheduled,
+                pickupStatus: PickupStatus.assigned,
                 id: trashId,
             },
             data: {
@@ -228,7 +228,7 @@ class TrashRepository {
                         id: { in: ids },
                     },
                     data: {
-                        pickupStatus: PickupStatus.scheduled,
+                        pickupStatus: PickupStatus.assigned,
                         userDriverId: driverId,
                     },
                 });

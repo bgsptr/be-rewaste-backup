@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { CarStatus } from "@prisma/client";
 import { CreateDriverDto } from "src/application/dto/drivers/create_driver.dto";
 import { CreateTransporterDto } from "src/application/dto/transporter/create_transporter.dto";
+import { CustomBadRequest } from "src/core/exceptions/custom-bad-request.exception";
 import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
 import CarService from "src/core/services/cars/car.service";
 import DriverService from "src/core/services/drivers/driver.service";
@@ -53,7 +55,7 @@ class TransporterController {
         }
 
 
-        // add dto
+        // add dto validation
         const userId = await this.driverService.addDriver(data, param.id);
 
         return {
@@ -66,7 +68,8 @@ class TransporterController {
     }
 
     @Get("/:id/drivers")
-    async getAllDriverBasedTransporterController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }, @Query() qs: { available_only?: string }) {
+    // available_only = true, has_address = true => driver yang akan di-assign di service area
+    async getAllDriverBasedTransporterController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }, @Query() qs: { available_only?: string, has_address?: string }) {
         // check if user neither admin nor correct transporter with payload jwt userId, throw forbidden
         const { id: transporterIdJWT, roles } = payload;
         const isAdmin = roles.includes(roleNumber.ADMIN);
@@ -83,29 +86,54 @@ class TransporterController {
         }
 
 
-        // add dto
-        const driversNoFilter = await this.driverService.getAllDriversByTransporterId(param.id, qs.available_only);
-        this.logger.log(driversNoFilter);
-
-        // const drivers = qs.available_only ? driversNoFilter.filter(driver => driver?.driverVillageId === null) : driversNoFilter;
+        // add dto validation
+        const drivers = await this.driverService.getAllDriversByTransporterId(param.id, qs.available_only, qs.has_address);
+        this.logger.log(drivers);
 
         return {
             success: true,
             message: `successfully fetch all driver from transporter with id ${param.id}`,
             data: {
-                drivers: driversNoFilter
+                drivers,
             }
         }
     }
 
     @Get("/:id/cars")
-    async getAllCarDriversController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }) {
-        const { id, roles } = payload;
+    async getAllCarDriversController(@Param() param: { id: string }, @FetchJWTPayload() payload: { id: string, roles: string[] }, @Query() qs: { status?: string }) {
+        // const { id, roles } = payload;
         // if (!roles.includes(RoleIdGenerate.transporter)) throw forrb
         // if (param.id !== id) throw forbidden
-        const cars = await this.carService.getCarWithDriver();
 
-        return cars;
+        const { id: transporterIdJWT, roles } = payload;
+        const isAdmin = roles.includes(roleNumber.ADMIN);
+        const isTransporter = roles.includes(roleNumber.TRANSPORTER);
+
+        if (!isAdmin) {
+            if (isTransporter && String(transporterIdJWT) !== String(param.id)) {
+                throw new CustomForbidden();
+            }
+
+            if (!isTransporter) {
+                throw new CustomForbidden();
+            }
+        }
+
+        this.logger.debug(qs);
+
+        if (qs?.status && !(qs.status in CarStatus)) {
+            throw new CustomBadRequest("car status only available in 'idle', 'maintenance', 'operate'");
+        }
+
+        const cars = await this.carService.getCarWithDriver(qs?.status as CarStatus);
+
+        return {
+            success: true,
+            message: `successfully fetch cars from a transporter`,
+            result: {
+                cars,
+            },
+        }
     }
 
     @Post("/:id/villages")

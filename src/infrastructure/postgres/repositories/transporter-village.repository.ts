@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Transporter, TransporterVillage } from "@prisma/client";
+import { JoinStatus, Transporter, TransporterVillage } from "@prisma/client";
 import ITransporterVillageRepository from "src/core/interfaces/repositories/transporter-village.repository.interface";
 import ITransporterRepository from "src/core/interfaces/repositories/transporter.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
@@ -20,6 +20,21 @@ class TransporterVillageRepository implements ITransporterVillageRepository {
         return await this.prisma.transporterVillage.count({
             where: {
                 villageId,
+            }
+        })
+    }
+
+    async updateStatus(status: boolean, transporterId: string, villageId: string): Promise<void> {
+        await this.prisma.transporterVillage.update({
+            data: {
+                joinStatus: status ? JoinStatus.Accepted : JoinStatus.Rejected,
+                linkedAt: new Date(),
+            },
+            where: {
+                transporterId_villageId: {
+                    transporterId,
+                    villageId,
+                }
             }
         })
     }

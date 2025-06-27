@@ -26,7 +26,9 @@ class TransporterRepository implements ITransporterRepository {
                 users: {
                     select: {
                         userId: true,
-                        driverVillageId: true
+                        driverVillageId: true,
+                        car: true,
+                        address: true
                     },
                 }
             }
@@ -35,6 +37,8 @@ class TransporterRepository implements ITransporterRepository {
         return users.map(user => ({
             id: user.userId,
             villageId: user.driverVillageId,
+            car: user.car,
+            address: user.address,
         }));
     }
 }

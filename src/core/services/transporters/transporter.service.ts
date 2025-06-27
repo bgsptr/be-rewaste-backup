@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { User } from "@prisma/client";
+import { JoinStatus, User } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { CreateCitizenDto } from "src/application/dto/citizens/create_citizen.dto";
 import { CreateTransporterDto } from "src/application/dto/transporter/create_transporter.dto";
@@ -66,7 +66,7 @@ export class TransporterService {
         // check if payload internal transporter is false (swasta) lalu buat repository untuk model itu
 
         // if created by village automate assign transporter to that village
-        if (villageId) await this.transporterVillageRepository.create({ transporterId, villageId });
+        if (villageId) await this.transporterVillageRepository.create({ transporterId, villageId, joinStatus: JoinStatus.Pending, linkedAt: null });
 
         return transporterId;
     }
@@ -84,6 +84,13 @@ export class TransporterService {
             //     return !match;
             // });
 
+            // validate driver have address and car
+            for (const driver of driversFromDB) {
+                if (!driver.car?.id || !driver.address?.addressId) {
+                    throw new CustomForbidden(`Can't assign to the driver with id ${driver.id}, missing car or address`);
+                }
+            }
+
             const driverMap = new Map(driversFromDB.map(d => [d.id, d.villageId]));
             const invalidDriverExists = drivers.some(driverId => {
                 const villageId = driverMap.get(driverId);
@@ -96,7 +103,9 @@ export class TransporterService {
 
             await this.transporterVillageRepository.create({
                 transporterId,
-                villageId
+                villageId,
+                joinStatus: JoinStatus.Pending,
+                linkedAt: null,
             });
 
             this.logger.log("successfully create transporter village row");

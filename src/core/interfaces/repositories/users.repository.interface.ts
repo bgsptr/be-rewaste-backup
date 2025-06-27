@@ -15,4 +15,5 @@ export interface IUserRepository extends Repository<User> {
     getActiveCitizensWithTodayDraftTrash(villageId: string): Promise<any>;
     getSelfInformation(userId: string): Promise<User | null>;
     findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string }[]>;
+    getDriverById(driverId: string): Promise<any>;
 }

@@ -7,10 +7,11 @@ import { UserRoleModule } from "../user-role/user-role.module";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
+import TransporterVillageRepository from "src/infrastructure/postgres/repositories/transporter-village.repository";
 
 @Module({
     imports: [LoggerModule],
-    providers: [VillageService, VillageRepository, UsersRepository, VillageMapper, UserRoleRepository],
+    providers: [VillageService, VillageRepository, UsersRepository, VillageMapper, UserRoleRepository, TransporterVillageRepository],
     controllers: [VillageController],
 })
 

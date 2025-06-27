@@ -5,32 +5,34 @@ import * as cookieParser from 'cookie-parser';
 import { DomainExceptionsFilter } from './shared/filters/domain-exception.filter';
 import { LoggerService } from './infrastructure/logger/logger.service';
 import * as dotenv from "dotenv";
+import { ZodValidationFilter } from './shared/filters/zod.filter';
+// import * as bodyParser from 'body-parser';
 
 dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
+  // app.use(bodyParser.json());
 
-  // app.use(jwt({
-  //   secret: "secret",
-  //   getToken: req => req.cookies.token
-  // }))
-  
   app.enableCors({
     origin: 'http://localhost:3000',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Authorization',
     credentials: true,
   })
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true
-    })
-  )
+  // app.useGlobalPipes(
+  //   new ValidationPipe({
+  //     transform: true,
+  //     whitelist: true,
+  //   })
+  // )
 
   const loggerService = await app.resolve(LoggerService);
-  app.useGlobalFilters(new DomainExceptionsFilter(loggerService));
+  app.useGlobalFilters(
+    new ZodValidationFilter(),
+    new DomainExceptionsFilter(loggerService)
+  );
   await app.listen(process.env.PORT ?? 5000);
 }
 bootstrap();

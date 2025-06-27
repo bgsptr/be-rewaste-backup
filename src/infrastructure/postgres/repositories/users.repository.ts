@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { AccountStatus, Address, PickupStatus, RescheduleStatus, User } from "@prisma/client";
+import { AccountStatus, Address, CarStatus, PickupStatus, RescheduleStatus, User } from "@prisma/client";
 import { CustomConflict } from "src/core/exceptions/custom-conflict.exception";
 import { IUserRepository } from "src/core/interfaces/repositories/users.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
@@ -119,7 +119,7 @@ class UsersRepository implements IUserRepository {
         })
     }
 
-    async getDriverByTransporter(id: string, addressIsNull: boolean = false) {
+    async getDriverByTransporter(id: string, availableOnly?: boolean) {
         return await this.prisma.user.findMany({
             include: {
                 car: {
@@ -132,9 +132,12 @@ class UsersRepository implements IUserRepository {
             },
             where: {
                 transporterId: id,
-                address: addressIsNull ? null : {
-                    isNot: null
-                },
+                // address: availableOnly ? null : {
+                //     isNot: null
+                // },
+                // car: {
+                //     isNot: null
+                // },
                 roles: {
                     some: {
                         roleId: roleNumber.DRIVER,
@@ -199,7 +202,7 @@ class UsersRepository implements IUserRepository {
                 rescheduleStatus: RescheduleStatus.inactive,
                 trashCitizen: {
                     some: {
-                        pickupStatus: PickupStatus.draft || PickupStatus.cancelled,
+                        pickupStatus: PickupStatus.generated || PickupStatus.cancelled,
                         createdAt: {
                             gte: todayStart,
                             lte: todayEnd,
@@ -267,7 +270,33 @@ class UsersRepository implements IUserRepository {
         })
     }
 
-
+    async getDriverById(driverId: string) {
+        return await this.prisma.user.findFirstOrThrow({
+            where: {
+                userId: driverId,
+                roles: {
+                    some: {
+                        roleId: roleNumber.DRIVER
+                    }
+                }
+            },
+            select: {
+                userId: true,
+                fullName: true,
+                phoneNumber: true,
+                email: true,
+                createdAt: true,
+                accountStatus: true,
+                simNo: true,
+                lastSeen: true,
+                car: {
+                    select: {
+                        id: true,
+                    }
+                }
+            }
+        })
+    }
 }
 
 export default UsersRepository;

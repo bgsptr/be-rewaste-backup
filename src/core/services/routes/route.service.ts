@@ -48,10 +48,10 @@ class RouteService {
             //     }
             // });
 
-            const draftTrash = allTrashToday.filter(t => t.pickupStatus === PickupStatus.draft);
-            const scheduledTrash = allTrashToday.filter(t => t.pickupStatus === PickupStatus.scheduled);
+            const generatedTrash = allTrashToday.filter(t => t.pickupStatus === PickupStatus.generated);
+            const assignedTrash = allTrashToday.filter(t => t.pickupStatus === PickupStatus.assigned);
 
-            const scheduledTransporterIds = scheduledTrash
+            const scheduledTransporterIds = assignedTrash
                 .map(t => t.userDriver?.transporterId)
                 .filter(Boolean);
 
@@ -68,12 +68,12 @@ class RouteService {
 
             // const capacityFinal = capacityTotalInTransporter / lengthOfDriver;
 
-            const scheduledCountForThisTransporter = scheduledTrash.filter(
+            const scheduledCountForThisTransporter = assignedTrash.filter(
                 t => t.userDriver?.transporterId === transporterId
             ).length;
 
             const quotaForThisTransporter = Math.max(
-                draftTrash.length / transporterCount - scheduledCountForThisTransporter,
+                generatedTrash.length / transporterCount - scheduledCountForThisTransporter,
                 0
             );
 
@@ -88,7 +88,7 @@ class RouteService {
 
 
             const jobs: Job[] = allTrashToday
-                .filter(trash => trash.pickupStatus === PickupStatus.draft)
+                .filter(trash => trash.pickupStatus === PickupStatus.generated)
                 .map(trash => {
                     idMap.set(currentId, { type: 'trash', originalId: trash.id });
 

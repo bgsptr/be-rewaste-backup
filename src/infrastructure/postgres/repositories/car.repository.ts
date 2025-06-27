@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { $Enums, Car } from "@prisma/client";
+import { $Enums, Car, CarStatus } from "@prisma/client";
 import { ICarRepository } from "src/core/interfaces/repositories/car.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
 
@@ -7,7 +7,7 @@ import PrismaService from "src/core/services/prisma/prisma.service";
 class CarRepository implements ICarRepository {
     constructor(
         private prisma: PrismaService,
-    ) {}
+    ) { }
 
     async create(data: Car): Promise<string> {
         const { id } = await this.prisma.car.create({
@@ -17,7 +17,7 @@ class CarRepository implements ICarRepository {
         return id;
     }
 
-    async getAllWithDriver(): Promise<any> {
+    async getAllWithDriver() {
         return await this.prisma.car.findMany({
             include: {
                 driver: {
@@ -58,6 +58,53 @@ class CarRepository implements ICarRepository {
                 }
             }
         });
+    }
+
+    // async getAllCarsWithIdleStatus(transporterId: string) {
+    //     return await this.prisma.car.findMany({
+    //         where: {
+    //             transporterId,
+    //             carStatus: CarStatus.idle,
+    //         },
+    //     })
+    // }
+
+    async get(id: string): Promise<Car> {
+        return await this.prisma.car.findFirstOrThrow({
+            where: {
+                id,
+            }
+        })
+    }
+
+    async assignCarToDriver(carId: string, driverId: string) {
+        return await this.prisma.car.update({
+            data: {
+                driverId,
+            },
+            where: {
+                id: carId,
+            }
+        })
+    }
+
+    async getDriver(driverId: string) {
+        return await this.prisma.car.findFirstOrThrow({
+            where: {
+                driverId,
+            },
+            select: {
+                driver: true,
+            }
+        })
+    }
+
+    async findByPlatNo(platNo: string): Promise<Car | null> {
+        return await this.prisma.car.findFirst({
+            where: {
+                platNo,
+            }
+        })
     }
 }
 

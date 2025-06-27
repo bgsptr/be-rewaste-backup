@@ -20,10 +20,10 @@ enum AccountStatus {
 }
 
 enum PickupStatus {
-  draft
-  requested
-  scheduled
-  in_progress
+  generated // ganti dari draft
+  assigned // requested
+  acknowledged // scheduled
+  verifying // in_progress
   completed
   cancelled
 }
@@ -44,6 +44,12 @@ enum PaymentMethod {
   bank
   QRIS
   WA
+}
+
+enum JoinStatus {
+  Pending
+  Accepted
+  Rejected
 }
 
 model User {
@@ -118,7 +124,6 @@ model TrashType {
 
 model Trash {
   id             String              @id
-  pickupAt       DateTime?
   createdAt      DateTime
   pickupRateTime Float?
   pickupStatus   PickupStatus
@@ -129,8 +134,14 @@ model Trash {
   userCitizenId  String
   userCitizen    User                @relation("CitizenTrash", fields: [userCitizenId], references: [userId])
   rescheduleNote String?
-  verification   Verification[]
+  // verification   Verification[]
+  verification   Verification?
   trashTypes     TrashHasTrashType[]
+
+  actualPickupAt       DateTime? //waktu driver melakukan scan ini direkam
+  estimatePickupAt  DateTime? //hasil dari sistem melakukan generate dibantu klik oleh transporter
+  pickupRange       Float? //ors response
+  timeNeededInSecond  Int? //ors response
 }
 
 model Car {
@@ -218,6 +229,7 @@ model VillageProfile {
 
 model BBMHistory {
   id          String @id
+  spbuName    String
   evidenceUrl String
   totalLiter  Float
   createdAt   String
@@ -259,7 +271,7 @@ model Verification {
   createdAt         String
   verificatorUserId String
   verificator       User    @relation("Verificator", fields: [verificatorUserId], references: [userId])
-  trashId           String  // @unique
+  trashId           String  @unique
   trash             Trash   @relation(fields: [trashId], references: [id])
   verifyRateTime    Float
   status            Boolean
@@ -293,6 +305,8 @@ model VerificatorVerificationBadges {
 model TransporterVillage {
   transporterId String
   villageId     String
+  linkedAt      DateTime? //linkedAt ditambahkan setelah desa menyetujui kerjasama dan sebaliknya dari transporter juga
+  joinStatus    JoinStatus  @default(Pending)
   transporter   Transporter @relation(fields: [transporterId], references: [id])
   village       Village     @relation(fields: [villageId], references: [id])
 

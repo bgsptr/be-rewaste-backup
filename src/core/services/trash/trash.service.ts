@@ -186,7 +186,7 @@ class TrashService {
             const { id, pickupStatus, userCitizen, userDriver } = await this.trashRepository.getWithTypesById(trashId);
             if (userDriver) throw new CustomConflict('trash', '', 'trash already assigned');
             if (pickupStatus !== PickupStatus.generated) throw new CustomBadRequest(`failed to pickup, due the trash is not in draft status`);
-            if ( !userCitizen.address || !driver.address ) throw new CustomBadRequest("either citizen or driver did not add the address before");
+            if (!userCitizen.address || !driver.address) throw new CustomBadRequest("either citizen or driver did not add the address before");
             const { lat: citizenLat, lng: citizenLng } = userCitizen.address;
             const { lat: driverLat, lng: driverLng } = driver.address;
             const startLocation = lastTrashPickup ? {
@@ -225,9 +225,24 @@ class TrashService {
         if (linked?.transporterVillage[0].joinStatus !== JoinStatus.Accepted) throw new NotFoundException("trash");
         const trashList = await this.trashRepository.getTrashTodayFromSelectedVillage(linked.transporterVillage[0].villageId);
 
+        // return trashList;
+
+        // di frontend => warna merah kalo loyaltyId is not null dan verify status false,
+        // warna kuning => loyaltyId is null atau loyalty id not null dan veriy status true,
+        // warna hijau => sudah di scan pickup
         this.logger.debug(trashList);
 
-        return trashList;
+        const listThatNeedVerify = trashList.filter(list => list.userCitizen.loyaltyId && !list.verifyStatus).map(item => ({
+            pickupIsFinished: "need_verify",
+            ...item,
+        }));
+        const needVerityTrashIds = new Set(listThatNeedVerify.map(item => item.id));
+        const unloyaltyTrash = trashList.filter(item => !needVerityTrashIds.has(item.id)).map(item => ({
+            pickupIsFinished: item.pickupStatus === PickupStatus.completed ? "pickup_complete" : "ready_to_pickup",
+            ...item,
+        }));
+
+        return [...listThatNeedVerify, ...unloyaltyTrash];
     }
 }
 

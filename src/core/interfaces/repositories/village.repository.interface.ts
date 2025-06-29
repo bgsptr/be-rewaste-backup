@@ -5,6 +5,7 @@ export interface IVillageRepository {
     getAll(): Promise<any>;
     getVillageWithFamilyCountAndDriver(transporterId: string): Promise<any>;
     getAssignedVerificatorByVilageId(villageId: string): Promise<string | null>;
-    getById(id: string): Promise<{ id: string } | null>;
+    getById(id: string): Promise<{ id: string, userVerificatorId: string | null } | null>;
     getLinkedProposal(transporterId: string, villageId: string): Promise<any>;
+    update(data: Partial<Village>): Promise<void>
 }

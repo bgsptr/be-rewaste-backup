@@ -27,6 +27,8 @@ class TrashController {
         }
     }
 
+    @Roles(roleNumber.CITIZEN)
+    @UseGuards(RolesGuard)
     @Get()
     async getAllHistoryTrashOfUser(@FetchJWTPayload() payload: { id: string }) {
         // bisa pagination filter by per month;

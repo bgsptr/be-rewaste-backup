@@ -7,9 +7,10 @@ import { AuthMiddleware } from "src/middlewares/auth.middleware";
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
 import PointRepository from "src/infrastructure/postgres/repositories/point.repository";
 import { VerificatorMapper } from "src/application/mapper/verificator.mapper";
+import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 
 @Module({
-    providers: [UserService, UsersRepository, CitizenMapper, VerificatorMapper, UserRoleRepository, PointRepository],
+    providers: [UserService, UsersRepository, CitizenMapper, VerificatorMapper, UserRoleRepository, PointRepository, VillageRepository],
     controllers: [UserController],
     exports: [UsersRepository],
 })

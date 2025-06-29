@@ -14,6 +14,7 @@ export interface IUserRepository extends Repository<User> {
     associateAllDriverToSelectedVillage(drivers: string[], driverVillageId: string): Promise<void>;
     getActiveCitizensWithTodayDraftTrash(villageId: string): Promise<any>;
     getSelfInformation(userId: string): Promise<User | null>;
-    findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string }[]>;
+    findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string, loyaltyId: string | null }[]>;
     getDriverById(driverId: string): Promise<any>;
+    updateVerificatorAndReturnId(data: Partial<User>): Promise<string>
 }

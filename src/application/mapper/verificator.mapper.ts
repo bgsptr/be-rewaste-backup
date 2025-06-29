@@ -9,7 +9,7 @@ export class VerificatorMapper implements IMapper<CreateVerificatorDto, User, Re
         const verificatorId = generateIdForRole(RoleIdGenerate.verificator);
         return {
             userId: verificatorId,
-            villageId: dto.villageId,
+            villageId: dto.villageId ?? null,
             nik: dto.nik ?? "",
             phoneNumber: dto.phone,
             email: dto.email,

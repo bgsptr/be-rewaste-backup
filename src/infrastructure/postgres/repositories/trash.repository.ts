@@ -239,6 +239,7 @@ class TrashRepository {
             include: {
                 userCitizen: {
                     select: {
+                        loyaltyId: true,
                         // villageId: true,
                         address: true,
                     }
@@ -300,6 +301,41 @@ class TrashRepository {
     //         }
     //     });
     // }
+
+    async getTrashByBatchCitizenId(citizenIds: string[]) {
+        const { todayStart: gte, todayEnd: lte } = DayConvertion.getStartAndEndForToday();
+        return this.prisma.trash.findMany({
+            where: {
+                // verifyStatus: false,
+                createdAt: {
+                    gte,
+                    lte,
+                },
+                userCitizen: {
+                    // loyaltyId: {
+                    //     not: null
+                    // }, // nanti di table user
+                    userId: {
+                        in: citizenIds,
+                    },
+                },
+            },
+            select: {
+                id: true,
+                userCitizen: {
+                    select: {
+                        userId: true,
+                        fullName: true,
+                        email: true,
+                        phoneNumber: true,
+                        address: true,
+                    }
+                },
+                verifyStatus: true,
+                // pickupRange: true,
+            }
+        })
+    }
 }
 
 export default TrashRepository;

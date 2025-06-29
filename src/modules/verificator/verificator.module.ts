@@ -7,10 +7,13 @@ import UsersRepository from "src/infrastructure/postgres/repositories/users.repo
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
 import PointRepository from "src/infrastructure/postgres/repositories/point.repository";
 import { AuthMiddleware } from "src/middlewares/auth.middleware";
+import VerificationService from "src/core/services/verifications/verification.service";
+import TrashRepository from "src/infrastructure/postgres/repositories/trash.repository";
+import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 
 @Module({
     controllers: [VerificatorController],
-    providers: [UserService, CitizenMapper, VerificatorMapper, UsersRepository, UserRoleRepository, PointRepository],
+    providers: [UserService, VerificationService, CitizenMapper, VerificatorMapper, UsersRepository, UserRoleRepository, PointRepository, TrashRepository, VillageRepository],
 })
 
 export class VerificatorModule implements NestModule {

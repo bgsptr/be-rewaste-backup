@@ -10,13 +10,23 @@ class VillageRepository implements IVillageRepository {
         private readonly prisma: PrismaService
     ) { }
 
-    async getById(id: string): Promise<{ id: string } | null> {
+    async update(data: Partial<Village>): Promise<void> {
+        await this.prisma.village.update({
+            where: {
+                id: data.id,
+            },
+            data,
+        })
+    }
+
+    async getById(id: string): Promise<{ id: string, userVerificatorId: string | null } | null> {
         return await this.prisma.village.findFirst({
             where: {
                 id,
             },
             select: {
-                id: true
+                id: true,
+                userVerificatorId: true,
             }
         })
     }
@@ -114,6 +124,14 @@ class VillageRepository implements IVillageRepository {
                 },
             },
         });
+    }
+
+    async getByUserVerificatorId(verificatorId: string) {
+        return await this.prisma.village.findFirstOrThrow({
+            where: {
+                userVerificatorId: verificatorId,
+            },
+        })
     }
 
     // async getAllCitizensWithAddressInformation(villageId: string) {

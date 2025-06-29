@@ -263,7 +263,7 @@ class UsersRepository implements IUserRepository {
         });
     }
 
-    async findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string }[]> {
+    async findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string, loyaltyId: string | null }[]> {
         const datas = await this.prisma.user.findMany({
             where: {
                 villageId,
@@ -278,13 +278,15 @@ class UsersRepository implements IUserRepository {
             },
             select: {
                 address: true,
-                userId: true
+                userId: true,
+                loyaltyId: true,
             }
         });
 
         return datas.map(data => ({
             addresses: data.address as Address,
             userId: data.userId,
+            loyaltyId: data.loyaltyId,
         }));
     }
 
@@ -323,6 +325,17 @@ class UsersRepository implements IUserRepository {
                 }
             }
         })
+    }
+
+    async updateVerificatorAndReturnId(data: Partial<User>): Promise<string> {
+        const verificator = await this.prisma.user.update({
+            where: {
+                userId: data.userId
+            },
+            data,
+        });
+
+        return verificator.userId;
     }
 }
 

@@ -11,7 +11,7 @@ import TransporterVillageRepository from "src/infrastructure/postgres/repositori
 
 @Module({
     imports: [LoggerModule],
-    providers: [VillageService, VillageRepository, UsersRepository, VillageMapper, UserRoleRepository, TransporterVillageRepository],
+    providers: [VillageService, VillageRepository, UsersRepository, VillageMapper, UserRoleRepository, TransporterVillageRepository, VillageRepository],
     controllers: [VillageController],
 })
 

@@ -15,7 +15,7 @@ class VerificatorController {
         private userService: UserService,
         private loggerService: LoggerService,
         private verificationService: VerificationService,
-    ) {}
+    ) { }
 
     @UseGuards(RolesGuard)
     @Roles(roleNumber.ADMIN)
@@ -35,10 +35,12 @@ class VerificatorController {
         }
     }
 
-    @Get('/:verificatorId/verification-tasks')
-    async getAllVerificationTaskController(@Param('verificatorId') id: string) {
-        const verifications = await this.verificationService.listAllVerification(id);
-        
+    @UseGuards(RolesGuard)
+    @Roles(roleNumber.VERIFICATOR)
+    @Get('/verification-tasks')
+    async getAllVerificationTaskController(@FetchJWTPayload() payload: { id: string }) {
+        const verifications = await this.verificationService.listAllVerification(payload.id);
+
         return {
             success: true,
             message: `successfully fetch all verification tasks for ${new Date().toISOString()}`,
@@ -51,6 +53,8 @@ class VerificatorController {
         }
     }
 
+    @UseGuards(RolesGuard)
+    @Roles(roleNumber.ADMIN)
     @Put('/:verificatorId')
     async updateVerificatorDataController(@Param('verificatorId') id: string, @Body() data: IAssignVerificatorDto) {
         const verificatorId = await this.verificationService.updateVerificatorInformation(id, data);
@@ -58,6 +62,19 @@ class VerificatorController {
         return {
             success: true,
             message: `successfully update verificator with id ${verificatorId}`,
+        }
+    }
+
+    @UseGuards(RolesGuard)
+    @Roles(roleNumber.VERIFICATOR)
+    @Get('/verification-history')
+    async getVerificationHistoryController(@FetchJWTPayload() payload: { id: string }) {
+        const result = await this.verificationService.getVerificationHistory(payload.id);
+
+        return {
+            success: true,
+            message: `successfully fetch all verification history`,
+            result,
         }
     }
 }

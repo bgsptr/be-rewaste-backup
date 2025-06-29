@@ -20,6 +20,7 @@ import { HttpModule } from '@nestjs/axios';
 import { RouteModule } from './modules/routes/route.module';
 import { DriverModule } from './modules/drivers/driver.module';
 import { TransporterRequestModule } from './modules/transporter-request/transporter-request.module';
+import { VerificationModule } from './modules/verifications/verification.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { TransporterRequestModule } from './modules/transporter-request/transpor
     RouteModule,
     DriverModule,
     TransporterRequestModule,
+    VerificationModule,
     HttpModule.register({
       baseURL: 'https://api.openrouteservice.org',
       timeout: 10000,

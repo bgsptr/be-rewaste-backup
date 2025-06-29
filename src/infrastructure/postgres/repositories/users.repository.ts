@@ -26,6 +26,25 @@ class UsersRepository implements IUserRepository {
     //     return driver.transporterId;
     // }
 
+    async getCitizenDetailByCitizenId(userId: string) {
+        return await this.prisma.user.findFirstOrThrow({
+            where: {
+                userId,
+            },
+            select: {
+                userId: true,
+                fullName: true,
+                address: true,
+                village: {
+                    select: {
+                        id: true,
+                        villageName: true
+                    }
+                }
+            }
+        })
+    }
+
     async getAssignedVillageId(userId: string) {
         const user = await this.prisma.user.findFirst({
             where: {

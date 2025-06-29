@@ -1,8 +1,10 @@
+import { Injectable } from "@nestjs/common";
 import { Verification } from "@prisma/client";
 import { IVerificationRepository } from "src/core/interfaces/repositories/verification.repository.interface";
 import PrismaService from "src/core/services/prisma/prisma.service";
 import DayConvertion from "src/utils/static/dayjs";
 
+@Injectable()
 class VerificationRepository implements IVerificationRepository {
     constructor(
         private prisma: PrismaService,
@@ -30,6 +32,44 @@ class VerificationRepository implements IVerificationRepository {
         });
 
         return datas.map(data => data.trashId);
+    }
+
+    async getVerificationHistoryList(verificatorId: string) {
+        return await this.prisma.verification.findMany({
+            where: {
+                verificatorUserId: verificatorId
+            },
+            select: {
+                id: true,
+                createdAt: true,
+                trash: {
+                    select: {
+                        point: true,
+                        userCitizen: {
+                            select: {
+                                userId: true,
+                                fullName: true,
+                            }  
+                        },
+                        trashTypes: {
+                            select: {
+                                trashTypeId: true,
+                                trashId: true,
+                                weight: true,
+                            }
+                        }
+                    }
+                },
+            }
+        })
+    }
+
+    async getById(verificationId: string): Promise<Verification> {
+        return await this.prisma.verification.findFirstOrThrow({
+            where: {
+                id: verificationId,
+            },
+        })
     }
 }
 

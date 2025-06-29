@@ -2,6 +2,7 @@ import { Address, User } from "@prisma/client";
 import { Repository } from "src/core/base/repository";
 
 export interface IUserRepository extends Repository<User> {
+    getCitizenDetailByCitizenId(userId: string): Promise<any>;
     registerAccountFullData(data: User): Promise<string>;
     registerAccount(data: Partial<User>, password?: string): Promise<string>;
     // registerCitizen(data: Partial<User>): Promise<string>;

@@ -34,10 +34,16 @@ class VerificationRepository implements IVerificationRepository {
         return datas.map(data => data.trashId);
     }
 
-    async getVerificationHistoryList(verificatorId: string) {
+    async getVerificationHistoryList(verificatorId: string, date?: { todayStart: Date; todayEnd: Date }) {
         return await this.prisma.verification.findMany({
             where: {
-                verificatorUserId: verificatorId
+                verificatorUserId: verificatorId,
+                ...(date && {
+                    createdAt: {
+                        gte: date.todayStart.toISOString(),
+                        lte: date.todayEnd.toISOString(),
+                    }
+                }),
             },
             select: {
                 id: true,
@@ -49,7 +55,7 @@ class VerificationRepository implements IVerificationRepository {
                             select: {
                                 userId: true,
                                 fullName: true,
-                            }  
+                            }
                         },
                         trashTypes: {
                             select: {

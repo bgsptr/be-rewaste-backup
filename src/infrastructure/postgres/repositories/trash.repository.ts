@@ -336,6 +336,23 @@ class TrashRepository {
             }
         })
     }
+
+    async countTrashByBatchCitizenId(citizenIds: string[]) {
+        const { todayStart: gte, todayEnd: lte } = DayConvertion.getStartAndEndForToday();
+        return this.prisma.trash.count({
+            where: {
+                createdAt: {
+                    gte,
+                    lte,
+                },
+                userCitizen: {
+                    userId: {
+                        in: citizenIds,
+                    },
+                },
+            },
+        })
+    }
 }
 
 export default TrashRepository;

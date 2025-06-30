@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import {  Body, Controller, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { CreateVerificatorDto, IAssignVerificatorDto } from "src/application/dto/verificators/create_verificator.dto";
 import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
 import { RolesGuard } from "src/core/guards/roles.guard";
@@ -68,13 +68,15 @@ class VerificatorController {
     @UseGuards(RolesGuard)
     @Roles(roleNumber.VERIFICATOR)
     @Get('/verification-history')
-    async getVerificationHistoryController(@FetchJWTPayload() payload: { id: string }) {
-        const result = await this.verificationService.getVerificationHistory(payload.id);
+    async getVerificationHistoryController(@FetchJWTPayload() payload: { id: string }, @Query() qs: { date: string }) {
+        const result = await this.verificationService.getVerificationHistory(payload.id, qs.date);
 
         return {
             success: true,
             message: `successfully fetch all verification history`,
-            result,
+            result: {
+                ...result
+            },
         }
     }
 }

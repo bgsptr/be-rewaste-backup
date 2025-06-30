@@ -7,6 +7,11 @@ class DayConvertion {
         return dayjs();
     }
 
+    static getTargetDateFromString(dateString: string): Date {
+        const dayjsObject = dayjs(dateString);
+        return dayjsObject.toDate();
+    }
+
     static getTarget(target: Date): Dayjs {
         return dayjs(target);
     }

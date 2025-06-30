@@ -8,6 +8,7 @@ import TrashRepository from "src/infrastructure/postgres/repositories/trash.repo
 import UsersRepository from "src/infrastructure/postgres/repositories/users.repository";
 import VerificationRepository from "src/infrastructure/postgres/repositories/verification.repository";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
+import DayConvertion from "src/utils/static/dayjs";
 
 @Injectable()
 class VerificationService {
@@ -19,6 +20,18 @@ class VerificationService {
         private logger: LoggerService,
     ) {
 
+    }
+
+    private async getBatchOfCitizenIdsInSelectedVillage(verificatorId: string) {
+        const { id: villageId, villageName } = await this.villageRepository.getByUserVerificatorId(verificatorId);
+        const userInfos = await this.userRepository.findAllCitizenOnlyAddressIdInVillage(villageId);
+        const userIds = userInfos.filter(user => user.loyaltyId !== null).map(user => user.userId);
+
+        return {
+            villageId,
+            villageName,
+            userIds,
+        };
     }
 
     async updateVerificatorInformation(verificatorIdDto: string, data: IAssignVerificatorDto) {
@@ -41,9 +54,7 @@ class VerificationService {
 
     async listAllVerification(verificatorId: string) {
         try {
-            const { id } = await this.villageRepository.getByUserVerificatorId(verificatorId);
-            const userInfos = await this.userRepository.findAllCitizenOnlyAddressIdInVillage(id);
-            const userIds = userInfos.filter(user => user.loyaltyId !== null).map(user => user.userId);
+            const { userIds } = await this.getBatchOfCitizenIdsInSelectedVillage(verificatorId);
             return this.trashRepository.getTrashByBatchCitizenId(userIds);
         } catch (err) {
             this.logger.error(err);
@@ -77,8 +88,10 @@ class VerificationService {
     //     }
     // }
 
-    async getVerificationHistory(verificatorId: string) {
-        const verifications = await this.verificationRepository.getVerificationHistoryList(verificatorId);
+    async getVerificationHistory(verificatorId: string, date?: string) {
+        const selectedDate = date ? DayConvertion.getTargetDateFromString(date) : null;
+        const dateInQS = selectedDate ? DayConvertion.getStartAndEndForToday(selectedDate) : undefined;
+        const verifications = await this.verificationRepository.getVerificationHistoryList(verificatorId, dateInQS);
 
         const totalVerified = verifications.length;
 
@@ -87,7 +100,7 @@ class VerificationService {
                 const trashObject = verification.trash;
                 const point = trashObject.point ?? 0;
                 const totalWeight = trashObject.trashTypes?.reduce((sum, trash) => sum + (trash.weight ?? 0), 0) ?? 0;
-                trashObject.trashTypes.map(trash => {
+                trashObject.trashTypes?.forEach(trash => {
                     const id = trash.trashTypeId;
                     const weight = trash.weight ?? 0;
 
@@ -116,6 +129,17 @@ class VerificationService {
             totalVerified > 0 ? stats.totalWeightVerified / totalVerified : 0;
 
         return {
+            verificationToday: date ? (async () => {
+                // Count verified records if date is provided
+                const { villageId, villageName, userIds: citizenIds } = await this.getBatchOfCitizenIdsInSelectedVillage(verificatorId);
+                const verifiedCountForDate = date ? await this.trashRepository.countTrashByBatchCitizenId(citizenIds) : undefined;
+
+                return {
+                    villageId,
+                    villageName,
+                    verifiedCountForDate,
+                }
+            }) : undefined,
             verificationStats: {
                 totalVerified,
                 totalWeightVerified: stats.totalWeightVerified,
@@ -129,7 +153,11 @@ class VerificationService {
                     };
 
                     for (const [key, value] of Object.entries(stats.composition)) {
-                        result[key] = stats.totalWeightVerified > 0 ? (value / stats.totalWeightVerified) * 100 : 0;
+                        // persentase per trash type
+                        // result[key] = stats.totalWeightVerified > 0 ? (value / stats.totalWeightVerified) * 100 : 0;
+
+                        // total weight per trash type
+                        result[key] = value
                     }
 
                     return result;
@@ -176,6 +204,10 @@ class VerificationService {
             if (err instanceof PrismaClientKnownRequestError) throw new NotFoundException('verification');
             throw err;
         }
+    }
+
+    async createVerification() {
+        
     }
 }
 

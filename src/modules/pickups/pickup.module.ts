@@ -8,10 +8,12 @@ import PointRepository from "src/infrastructure/postgres/repositories/point.repo
 import UserRoleRepository from "src/infrastructure/postgres/repositories/user-role.repository";
 import { AuthMiddleware } from "src/middlewares/auth.middleware";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
+import AddressRepository from "src/infrastructure/postgres/repositories/address.repository";
+import AddressService from "src/core/services/addresses/address.service";
 
 @Module({
     controllers: [PickupController],
-    providers: [UserService, UsersRepository, UserRoleRepository, CitizenMapper, VerificatorMapper, PointRepository, VillageRepository]
+    providers: [UserService, AddressService, UsersRepository, UserRoleRepository, CitizenMapper, VerificatorMapper, PointRepository, AddressRepository, VillageRepository]
 })
 
 export class PickupModule implements NestModule {

@@ -8,9 +8,10 @@ import UserRoleRepository from "src/infrastructure/postgres/repositories/user-ro
 import PointRepository from "src/infrastructure/postgres/repositories/point.repository";
 import { VerificatorMapper } from "src/application/mapper/verificator.mapper";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
+import AddressRepository from "src/infrastructure/postgres/repositories/address.repository";
 
 @Module({
-    providers: [UserService, UsersRepository, CitizenMapper, VerificatorMapper, UserRoleRepository, PointRepository, VillageRepository],
+    providers: [UserService, UsersRepository, CitizenMapper, VerificatorMapper, UserRoleRepository, PointRepository, VillageRepository, AddressRepository],
     controllers: [UserController],
     exports: [UsersRepository],
 })

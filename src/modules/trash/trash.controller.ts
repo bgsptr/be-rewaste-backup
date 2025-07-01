@@ -1,7 +1,9 @@
 import { Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
 import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
 import { RolesGuard } from "src/core/guards/roles.guard";
+import AddressService from "src/core/services/addresses/address.service";
 import TrashService from "src/core/services/trash/trash.service";
+import UserService from "src/core/services/users/user.service";
 import { LoggerService } from "src/infrastructure/logger/logger.service";
 import { FetchJWTPayload } from "src/shared/decorators/fetch-jwt-payload.decorator";
 import { Roles } from "src/shared/decorators/roles.decorator";
@@ -11,10 +13,11 @@ import { roleNumber } from "src/utils/enum/role.enum";
 class TrashController {
     constructor(
         private trashService: TrashService,
+        private addressService: AddressService,
         private logger: LoggerService,
     ) { }
 
-    @Get("pickup-list")
+    @Get("/pickup-list")
     async listAllPickupsController(@FetchJWTPayload() payload: { id: string }) {
         const pickupList = await this.trashService.getDailyPickupList(payload.id);
 
@@ -53,6 +56,7 @@ class TrashController {
 
     @Get("/daily")
     async getDailyTrashController(@FetchJWTPayload() payload: { id: string }) {
+        await this.addressService.checkAddressIsExistService(payload.id);
         const data = await this.trashService.getDailyTrashInformation(payload.id);
 
         return {

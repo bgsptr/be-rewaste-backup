@@ -237,7 +237,9 @@ class UsersRepository implements IUserRepository {
         })
     }
 
+    // /trash/pickup-list
     async getActiveCitizensWithTodayDraftTrash(villageId: string) {
+        // refactor
         const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
 
         return await this.prisma.user.findMany({
@@ -247,7 +249,9 @@ class UsersRepository implements IUserRepository {
                 rescheduleStatus: RescheduleStatus.inactive,
                 trashCitizen: {
                     some: {
-                        pickupStatus: PickupStatus.generated || PickupStatus.cancelled,
+                        pickupStatus: {
+                            in: [PickupStatus.generated, PickupStatus.cancelled]
+                        },
                         createdAt: {
                             gte: todayStart,
                             lte: todayEnd,
@@ -266,18 +270,22 @@ class UsersRepository implements IUserRepository {
                         lng: true,
                     }
                 },
-                // trashCitizen: {
-                //     where: {
-                //         pickupStatus: PickupStatus.draft,
-                //         createdAt: {
-                //             gte: todayStart,
-                //             lte: todayEnd,
-                //         },
-                //     },
-                //     select: {
-                //         id: true,
-                //     }
-                // }
+                trashCitizen: {
+                    where: {
+                        pickupStatus: PickupStatus.generated,
+                        createdAt: {
+                            gte: todayStart,
+                            lte: todayEnd,
+                        },
+                    },
+                    select: {
+                        id: true,
+                    },
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                    take: 1
+                }
             }
         });
     }

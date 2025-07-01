@@ -23,6 +23,14 @@ class AddressRepository {
 
         return id;
     }
+
+    async getById(addressId: string) {
+        return await this.prisma.address.findFirstOrThrow({
+            where: {
+                addressId,
+            }
+        })
+    }
 }
 
 export default AddressRepository;

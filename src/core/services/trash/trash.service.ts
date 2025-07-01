@@ -68,20 +68,21 @@ class TrashService {
 
             await this.trashRepository.createTrash(trashPickups);
 
-            const typeIds = await this.trashType.getAllTrashTypeIds();
+            // bug => trash type part akan digenerate ketika trash sudah diverifikasi oleh verificator
+            // const typeIds = await this.trashType.getAllTrashTypeIds();
 
-            const data: TrashHasTrashType[] = typeIds.map(type => {
-                const generatedTrashId = `WS-${generateIdWithNano()}`;
-                return {
-                    trashId: generatedTrashId,
-                    trashTypeId: type.id,
-                    weight: 0,
-                    verificationStatus: false,
-                    imageUrl: "",
-                }
-            });
+            // const data: TrashHasTrashType[] = typeIds.map(type => {
+            //     const generatedTrashId = `WS-${generateIdWithNano()}`;
+            //     return {
+            //         trashId: generatedTrashId,
+            //         trashTypeId: type.id,
+            //         weight: 0,
+            //         verificationStatus: false,
+            //         imageUrl: "",
+            //     }
+            // });
 
-            await this.trashTypeMap.generateTrashMapAllTypeCron(data);
+            // await this.trashTypeMap.generateTrashMapAllTypeCron(data);
             this.logger.log("successfully do the cron");
 
         } catch (err) {
@@ -104,7 +105,7 @@ class TrashService {
             // ganti relasi one user (verificator) to one trash entity
 
             // coba debug
-            const verificator = verification?.verificatorUserId && await this.userRepository.getVerificatorDataById(verification[0].verificatorUserId);
+            const verificator = verification?.verificatorUserId && await this.userRepository.getVerificatorDataById(verification.verificatorUserId);
             this.logger.debug(verificator);
 
             const data = {
@@ -133,7 +134,8 @@ class TrashService {
 
         } catch (err) {
             this.logger.error(err);
-            throw new CustomForbidden();
+            if (err instanceof PrismaClientKnownRequestError) throw new CustomForbidden();
+            throw err;
         }
     }
 
@@ -185,7 +187,8 @@ class TrashService {
             const driver = await this.userRepository.getDriverById(driverId);
             const { id, pickupStatus, userCitizen, userDriver } = await this.trashRepository.getWithTypesById(trashId);
             if (userDriver) throw new CustomConflict('trash', '', 'trash already assigned');
-            if (pickupStatus !== PickupStatus.generated) throw new CustomBadRequest(`failed to pickup, due the trash is not in draft status`);
+            // karena verifikasi dulu kalo user ada loyalty id baru driver bisa pickup
+            // if (pickupStatus !== PickupStatus.generated) throw new CustomBadRequest(`failed to pickup, due the trash is not in draft status`);
             if (!userCitizen.address || !driver.address) throw new CustomBadRequest("either citizen or driver did not add the address before");
             const { lat: citizenLat, lng: citizenLng } = userCitizen.address;
             const { lat: driverLat, lng: driverLng } = driver.address;
@@ -202,8 +205,9 @@ class TrashService {
             // const { distance, duration } = result.routes.summary; //POST
             const { distance, duration } = result.features[0].properties.segments[0];
             const estimatePickupAt = DayConvertion.getCurrent().add(duration, 'second').toDate();
-            await this.trashRepository.updateTrashDetailById(trashId, distance, duration, estimatePickupAt)
-            await this.trashRepository.updatePickupStatusById(id, PickupStatus.assigned);
+            await this.trashRepository.updateTrashDetailById(driverId, trashId, distance, duration, estimatePickupAt);
+            // karena verifikasi dulu kalo user ada loyalty id baru driver bisa pickup
+            // await this.trashRepository.updatePickupStatusById(id, PickupStatus.assigned);
         } catch (err) {
             this.logger.error(err);
             if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") throw new NotFoundException("trash", trashId);
@@ -219,10 +223,12 @@ class TrashService {
         const user = await this.userRepository.getSelfInformation(userId);
         if (!user?.driverVillageId || !user.transporterId) throw new NotFoundException("transporter");
         const { driverVillageId, transporterId } = user;
+
+        // refactor dan masukkan di VillageService agar bisa digunakan oleh UserService untuk get trash with status draft
         const linked = await this.villageRepository.getLinkedProposal(transporterId, driverVillageId);
         this.logger.debug(linked);
 
-        if (linked?.transporterVillage[0].joinStatus !== JoinStatus.Accepted) throw new NotFoundException("trash");
+        if (linked?.transporterVillage.find(village => village.villageId === user.driverVillageId)?.joinStatus !== JoinStatus.Accepted) throw new NotFoundException("trash");
         const trashList = await this.trashRepository.getTrashTodayFromSelectedVillage(linked.transporterVillage[0].villageId);
 
         // return trashList;

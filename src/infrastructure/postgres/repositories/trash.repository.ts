@@ -9,6 +9,17 @@ class TrashRepository {
         private prisma: PrismaService,
     ) { }
 
+    async verifyTrashById(trashId: string) {
+        await this.prisma.trash.update({
+            data: {
+                verifyStatus: true
+            },
+            where: {
+                id: trashId,
+            }
+        })
+    }
+
     async getAssignedLastForTodayWithDriverId(driverId: string) {
         const { todayStart: gte, todayEnd: lte } = DayConvertion.getStartAndEndForToday();
 
@@ -43,17 +54,23 @@ class TrashRepository {
         })
     }
 
-    async getTrashOwner(trashId: string): Promise<string> {
-        const { userCitizenId } = await this.prisma.trash.findFirstOrThrow({
+    async getTrashOwner(trashId: string) {
+        // const { userCitizenId } = await this.prisma.trash.findFirstOrThrow({
+        return await this.prisma.trash.findFirstOrThrow({
             where: {
                 id: trashId
             },
             select: {
                 userCitizenId: true,
+                userCitizen: {
+                    select: {
+                        villageId: true,
+                    }
+                }
             }
         })
 
-        return userCitizenId;
+        // return userCitizenId;
     }
 
     async getLatestTrashOfTheOwner(userId: string) {
@@ -91,6 +108,7 @@ class TrashRepository {
                         weight: true,
                         trashTypeId: true,
                         imageUrl: true,
+                        verificationStatus: true,
                         trashType: {
                             select: {
                                 name: true
@@ -112,6 +130,7 @@ class TrashRepository {
             },
             select: {
                 id: true,
+                verifyStatus: true,
                 pickupStatus: true,
                 createdAt: true,
                 actualPickupAt: true,
@@ -177,12 +196,14 @@ class TrashRepository {
         });
     }
 
-    async updateTrashDetailById(trashId: string, distance: number, duration: number, estimatePickup: Date) {
+    async updateTrashDetailById(userDriverId: string, trashId: string, distance: number, duration: number, estimatePickup: Date) {
         await this.prisma.trash.update({
             data: {
                 pickupRange: distance,
                 timeNeededInSecond: duration,
                 estimatePickupAt: estimatePickup,
+                userDriverId,
+                pickupStatus: PickupStatus.acknowledged
             },
             where: {
                 id: trashId,
@@ -235,6 +256,7 @@ class TrashRepository {
                 userCitizen: {
                     villageId,
                 },
+                userDriverId: null
             },
             include: {
                 userCitizen: {

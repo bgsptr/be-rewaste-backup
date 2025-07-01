@@ -6,6 +6,8 @@ import { DomainExceptionsFilter } from './shared/filters/domain-exception.filter
 import { LoggerService } from './infrastructure/logger/logger.service';
 import * as dotenv from "dotenv";
 import { ZodValidationFilter } from './shared/filters/zod.filter';
+import * as express from 'express';
+import { join } from 'path';
 // import * as bodyParser from 'body-parser';
 
 dotenv.config();
@@ -13,6 +15,8 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
+
+  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
   // app.use(bodyParser.json());
 
   app.enableCors({

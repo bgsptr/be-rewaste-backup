@@ -9,11 +9,14 @@ import { AuthMiddleware } from "src/middlewares/auth.middleware";
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 import { HttpModule } from "@nestjs/axios";
 import { OpenRouteAPIService } from "src/core/services/openrouteservice/open-route-api.service";
+import TrashPartRepository from "src/infrastructure/postgres/repositories/trash-part.repository";
+import AddressRepository from "src/infrastructure/postgres/repositories/address.repository";
+import AddressService from "src/core/services/addresses/address.service";
 
 @Module({
     imports: [HttpModule],
     controllers: [TrashController],
-    providers: [TrashService, TrashRepository, UsersRepository, TrashTypeRepository, TrashTypeMapRepository, VillageRepository, OpenRouteAPIService]
+    providers: [TrashService, AddressService, TrashRepository, UsersRepository, TrashTypeRepository, TrashTypeMapRepository, VillageRepository, OpenRouteAPIService, AddressRepository],
 })
 
 export class TrashModule implements NestModule {

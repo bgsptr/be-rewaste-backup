@@ -6,10 +6,11 @@ import UsersRepository from "src/infrastructure/postgres/repositories/users.repo
 import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
 import VerificationRepository from "src/infrastructure/postgres/repositories/verification.repository";
 import { AuthMiddleware } from "src/middlewares/auth.middleware";
+import TrashPartRepository from "src/infrastructure/postgres/repositories/trash-part.repository";
 
 @Module({
     controllers: [VerificationController],
-    providers: [VerificationService, TrashRepository, UsersRepository, VillageRepository, VerificationRepository],
+    providers: [VerificationService, TrashRepository, UsersRepository, VillageRepository, VerificationRepository, TrashPartRepository],
 })
 
 export class VerificationModule implements NestModule {

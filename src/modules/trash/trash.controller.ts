@@ -10,7 +10,6 @@ import { CustomForbidden } from 'src/core/exceptions/custom-forbidden.exception'
 import { RolesGuard } from 'src/core/guards/roles.guard';
 import AddressService from 'src/core/services/addresses/address.service';
 import TrashService from 'src/core/services/trash/trash.service';
-import UserService from 'src/core/services/users/user.service';
 import { LoggerService } from 'src/infrastructure/logger/logger.service';
 import { FetchJWTPayload } from 'src/shared/decorators/fetch-jwt-payload.decorator';
 import { Roles } from 'src/shared/decorators/roles.decorator';
@@ -130,7 +129,7 @@ class TrashController {
     @Query() qs: { date: string },
     @FetchJWTPayload() payload: { id: string },
   ) {
-    const trash = await this.trashService.getPickupListForDriverTimeline(
+    const data = await this.trashService.getPickupListForDriverTimeline(
       payload.id,
       qs.date,
     );
@@ -138,9 +137,7 @@ class TrashController {
     return {
       success: true,
       message: `successfully fetch pickup timeline for date ${qs.date}`,
-      data: {
-        trash,
-      },
+      data,
     };
   }
 }

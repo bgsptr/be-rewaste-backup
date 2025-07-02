@@ -9,10 +9,18 @@ import CarRepository from "src/infrastructure/postgres/repositories/car.reposito
 import RatingRepository from "src/infrastructure/postgres/repositories/rating.repository";
 import { CarMapper } from "src/application/mapper/car.mapper";
 import { AuthMiddleware } from "src/middlewares/auth.middleware";
+import TrashService from "src/core/services/trash/trash.service";
+import TrashRepository from "src/infrastructure/postgres/repositories/trash.repository";
+import VillageRepository from "src/infrastructure/postgres/repositories/village.repository";
+import TrashTypeMapRepository from "src/infrastructure/postgres/repositories/trash-type-map.repository";
+import TrashTypeRepository from "src/infrastructure/postgres/repositories/trash-type.repository";
+import { OpenRouteAPIService } from "src/core/services/openrouteservice/open-route-api.service";
+import { HttpModule } from "@nestjs/axios";
 
 @Module({
+    imports: [HttpModule],
     controllers: [DriverController],
-    providers: [DriverService, CarService, UsersRepository, UserRoleRepository, LoggerService, CarRepository, RatingRepository, CarMapper],
+    providers: [DriverService, TrashService, CarService, UsersRepository, UserRoleRepository, LoggerService, CarRepository, RatingRepository, CarMapper, TrashRepository, VillageRepository, TrashTypeMapRepository, TrashTypeRepository, OpenRouteAPIService],
     exports: [DriverService],
 })
 

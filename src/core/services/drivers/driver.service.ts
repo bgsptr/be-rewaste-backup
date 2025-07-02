@@ -133,10 +133,17 @@ class DriverService {
 
     async getDriverDetail(driverId: string) {
         try {
-            const driverData = this.userRepository.getDriverById(driverId);
+            const driverData = await this.userRepository.getDriverById(driverId);
             // const driverData = await this.carRepository.getDriver(driverId);
-
-            return driverData;
+            const current = DayConvertion.getCurrent();
+            const target = DayConvertion.getTarget(driverData.createdAt);
+            const totalYearExp = DayConvertion.getDiffOfYear(current, target);
+            return {
+                ...driverData,
+                experience: {
+                    totalYearExp,
+                }
+            };
         } catch (err) {
             if (err instanceof PrismaClientKnownRequestError) throw new NotFoundException('driver', driverId);
             throw err;

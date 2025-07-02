@@ -4,6 +4,7 @@ import { Body, Controller, Get, Param, Patch, Put } from "@nestjs/common";
 import { CustomForbidden } from "src/core/exceptions/custom-forbidden.exception";
 import CarService from "src/core/services/cars/car.service";
 import DriverService from "src/core/services/drivers/driver.service";
+import TrashService from "src/core/services/trash/trash.service";
 import { FetchJWTPayload } from "src/shared/decorators/fetch-jwt-payload.decorator";
 
 @Controller('drivers')
@@ -11,6 +12,7 @@ class DriverController {
     constructor(
         private driverService: DriverService,
         private carService: CarService,
+        private trashService: TrashService,
     ) {}
 
     @Get("/:id")
@@ -40,6 +42,19 @@ class DriverController {
                 car,
             }
         }
+    }
+
+
+    @Get("/me/profile")
+    async getDriverProfileController(@FetchJWTPayload() payload: { id: string }) {
+        const driver = await this.driverService.getDriverDetail(payload.id);
+        const { totalPickupLifetime, totalOntimePickupLifetimePercentage } = await this.trashService.getTotalPickupAndOnTimePickup(payload.id);
+        
+        return {
+            totalPickupLifetime,
+            totalOntimePickupLifetimePercentage,
+            driver,
+        };
     }
 }
 

@@ -333,14 +333,53 @@ class TrashService {
       const exactDate = DayConvertion.getTargetDateFromString(dateString);
       const { todayStart: gte, todayEnd: lte } =
         DayConvertion.getStartAndEndForToday(exactDate);
-      return await this.trashRepository.getpickupTimelineByDate(
+      const trashLists = await this.trashRepository.getpickupTimelineByDate(
         driverId,
         gte,
         lte,
       );
+
+      const { pickupRangeTotal, totalTimeNeed } = trashLists.reduce(
+        (acc, trash) => {
+          acc.pickupRangeTotal += trash.pickupRange ?? 0;
+          acc.totalTimeNeed += trash.timeNeededInSecond ?? 0;
+
+          return acc;
+        },
+        {
+          pickupRangeTotal: 0,
+          totalTimeNeed: 0,
+        },
+      );
+      return {
+        pickupRangeTotal: `${pickupRangeTotal} meters`,
+        totalTimeNeed: `${totalTimeNeed} seconds`,
+        totalCompletedPickup: trashLists.filter(
+          (list) => list.pickupStatus === PickupStatus.completed,
+        ).length,
+        totalPickup: trashLists.length,
+        trash: trashLists,
+      };
     } catch (err) {
       this.logger.error(err);
       throw err;
+    }
+  }
+
+  async getTotalPickupAndOnTimePickup(driverId: string) {
+    const pickups = await this.trashRepository.getPickupLifetime(driverId);
+    const totalPickupLifetime = pickups.length;
+
+    const ontimePickup = pickups.filter(
+      ({ actualPickupAt, estimatePickupAt }) =>
+        actualPickupAt &&
+        estimatePickupAt &&
+        actualPickupAt.getTime() <= estimatePickupAt.getTime(),
+    );
+
+    return {
+      totalPickupLifetime,
+      totalOntimePickupLifetimePercentage: ontimePickup.length / totalPickupLifetime,
     }
   }
 }

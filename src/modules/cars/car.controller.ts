@@ -32,7 +32,7 @@ class CarController {
         }
     }
 
-    @Get("fleet")
+    @Get("/fleet")
     async getFleetOfCarController(@FetchJWTPayload() payload: { id: string }) {
         const data = await this.carService.getFleetInformationWithDriverId(payload.id);
 

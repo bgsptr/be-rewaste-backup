@@ -28,6 +28,14 @@ class TrashRepository {
         })
     }
 
+    async getPickupLifetime(userDriverId: string) {
+        return await this.prisma.trash.findMany({
+            where: {
+                userDriverId,
+            }
+        })
+    }
+
     async verifyTrashById(trashId: string) {
         await this.prisma.trash.update({
             data: {

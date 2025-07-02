@@ -9,6 +9,25 @@ class TrashRepository {
         private prisma: PrismaService,
     ) { }
 
+    async getpickupTimelineByDate(driverId: string, gte: Date, lte: Date) {
+        return await this.prisma.trash.findMany({
+            where: {
+                createdAt: {
+                    gte,
+                    lte,
+                },
+                userDriverId: driverId,
+            },
+            include: {
+                userCitizen: {
+                    select: {
+                        address: true
+                    }
+                }
+            }
+        })
+    }
+
     async verifyTrashById(trashId: string) {
         await this.prisma.trash.update({
             data: {

@@ -19,6 +19,7 @@ import { Hasher } from 'src/utils/static/hasher';
 import PrismaService from '../prisma/prisma.service';
 import AddressRepository from 'src/infrastructure/postgres/repositories/address.repository';
 import { JoinStatus } from '@prisma/client';
+import { CustomBadRequest } from 'src/core/exceptions/custom-bad-request.exception';
 
 @Injectable()
 class UserService {
@@ -181,6 +182,44 @@ class UserService {
     );
 
     return data;
+  }
+
+  async getProfileByUserId(userId: string, activeRole: string) {
+    switch (activeRole) {
+      case roleNumber.CITIZEN:
+        return await this.getCitizenProfile(userId);
+      case roleNumber.VERIFICATOR:
+        return await this.getVerificatorProfile(userId);
+      case roleNumber.DRIVER:
+        await this.getDriverProfile(userId);
+      case roleNumber.VILLAGE:
+        await this.getVillageAdminProfile(userId);
+      case roleNumber.ADMIN:
+        await this.getSuperAdminProfile(userId);
+      default:
+        throw new CustomBadRequest('role does not exist');
+    }
+  }
+
+  async getCitizenProfile(userId: string) {
+    return await this.userRepository.getCitizenDetailByCitizenId(userId);
+  }
+
+  async getVerificatorProfile(verificatorId: string) {
+    return await this.userRepository.getVerificatorDataById(verificatorId);
+  }
+
+  async getDriverProfile(driverId: string) {
+    return await this.userRepository;
+  }
+
+  async getVillageAdminProfile(villageId: string) {
+    // return await this.userRepository.;
+    return await this.userRepository.getVillageById(villageId);
+  }
+
+  async getSuperAdminProfile(adminId: string) {
+    return await this.userRepository;
   }
 }
 

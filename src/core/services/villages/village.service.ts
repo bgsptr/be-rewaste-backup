@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JoinStatus, User } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { IAssignTransporterRequest } from 'src/application/dto/transporter-request/transporter-request.dto';
 import { CreateVillageDto } from 'src/application/dto/villages/create_village.dto';
+import { UpdateVillageProfileDto } from 'src/application/dto/villages/update_village_profile.dto';
+import VillageProfileMapper from 'src/application/mapper/village-profile.mapper';
 import { VillageMapper } from 'src/application/mapper/village.mapper';
 import { CustomConflict } from 'src/core/exceptions/custom-conflict.exception';
 import { CustomForbidden } from 'src/core/exceptions/custom-forbidden.exception';
@@ -10,6 +13,7 @@ import { LoggerService } from 'src/infrastructure/logger/logger.service';
 import TransporterVillageRepository from 'src/infrastructure/postgres/repositories/transporter-village.repository';
 import UserRoleRepository from 'src/infrastructure/postgres/repositories/user-role.repository';
 import UsersRepository from 'src/infrastructure/postgres/repositories/users.repository';
+import VillageProfileRepository from 'src/infrastructure/postgres/repositories/village-profile.repository';
 import VillageRepository from 'src/infrastructure/postgres/repositories/village.repository';
 import { roleNumber } from 'src/utils/enum/role.enum';
 import { Hasher } from 'src/utils/static/hasher';
@@ -25,10 +29,12 @@ export class VillageService {
   constructor(
     private logger: LoggerService,
     private villageRepository: VillageRepository,
+    private villageProfileRepository: VillageProfileRepository,
     private usersRepository: UsersRepository,
     private villageMapper: VillageMapper,
     private userRoleRepository: UserRoleRepository,
     private transporterVillageRepository: TransporterVillageRepository,
+    private villageProfileMapper: VillageProfileMapper,
   ) {}
 
   // shared method with other service
@@ -156,6 +162,36 @@ export class VillageService {
       transporterId,
       villageId,
     );
+  }
+
+  async getVillageProfileByVillageId(villageId: string) {
+    try {
+      const profile = await this.villageProfileRepository.getById(villageId);
+      const villageData = await this.usersRepository.getVillageById(villageId);
+      return {
+        ...profile,
+        // ...villageData,
+      };
+    } catch (err) {
+      this.logger.error(err);
+      if (err instanceof PrismaClientKnownRequestError) throw new NotFoundException('village');
+      throw err;
+    }
+  }
+
+  async updateVillageProfile(data: UpdateVillageProfileDto, villageId: string) {
+    const detailVillage = await this.villageProfileRepository.getById(villageId);
+    const villageProfileMap = {
+      ...this.villageProfileMapper.toEntity(
+        data,
+        villageId
+      ),
+    }
+    if (!detailVillage) {
+      await this.villageProfileRepository.create(villageProfileMap);
+    }
+
+    return await this.villageProfileRepository.update(villageProfileMap);
   }
 }
 

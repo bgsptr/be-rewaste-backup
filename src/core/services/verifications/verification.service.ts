@@ -205,7 +205,10 @@ class VerificationService {
 
           for (const [key, value] of Object.entries(stats.composition)) {
             // persentase per trash type
-            result[key] = stats.totalWeightVerified > 0 ? (value / stats.totalWeightVerified) * 100 : 0;
+            result[key] =
+              stats.totalWeightVerified > 0
+                ? (value / stats.totalWeightVerified) * 100
+                : 0;
 
             // total weight per trash type
             // result[key] = value;
@@ -325,6 +328,38 @@ class VerificationService {
       if (err instanceof PrismaClientKnownRequestError)
         throw new NotFoundException('trash', data.trashId);
       throw err;
+    }
+  }
+
+  async getVerificatorPerformance(userId: string) {
+    const verifications =
+      await this.verificationRepository.getAllVerificationDataOwnedByUser(
+        userId,
+      );
+
+    const lengthOfTotalVerification = verifications.length;
+    const verificationWeightTotal = verifications.reduce(
+      (acc, verification) => {
+        const dateSelected = new Date(verification.createdAt).getTime();
+        const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
+        if (dateSelected > todayStart.getTime() && dateSelected < todayEnd.getTime()) {
+          acc.totalWeightVerified += verification.verifyRateTime;
+        }
+        acc.totalWeightVerified += verification.trash.trashTypes.reduce(
+          (innerAcc, trashType) => innerAcc + trashType.weight,
+          0,
+        );
+        return acc;
+      },
+      {
+        totalRateTimeToVerify: 0,
+        totalWeightVerified: 0,
+      },
+    );
+
+    return {
+      lengthOfTotalVerification,
+      verificationWeightTotal,
     }
   }
 }

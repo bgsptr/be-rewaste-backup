@@ -77,6 +77,28 @@ class VerificationRepository implements IVerificationRepository {
             },
         })
     }
+
+    async getAllVerificationDataOwnedByUser(userId: string) {
+        return await this.prisma.verification.findMany({
+            where: {
+                verificatorUserId: userId,
+            },
+            select: {
+                id: true,
+                verifyRateTime: true,
+                createdAt: true,
+                trash: {
+                    select: {
+                        trashTypes: {
+                            select: {
+                                weight: true
+                            }
+                        }
+                    }
+                },
+            },
+        })
+    }
 }
 
 export default VerificationRepository;

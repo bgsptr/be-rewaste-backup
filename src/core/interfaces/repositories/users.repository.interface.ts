@@ -11,11 +11,13 @@ export interface IUserRepository extends Repository<User> {
     getAllCitizenHavingAddressAndNotRescheduled(): Promise<any>;
     updateAddNewAddress(addressId: string, userId: string): Promise<any>;
     checkAddressIsExist(addressId: string): Promise<{ addressId: string | null } | null>;
-    getVerificatorDataById(verificatorId: string): Promise<User | null>;
+    getVerificatorDataById(verificatorId: string): Promise<Partial<User> | null>;
     associateAllDriverToSelectedVillage(drivers: string[], driverVillageId: string): Promise<void>;
     getActiveCitizensWithTodayDraftTrash(villageId: string): Promise<any>;
     getSelfInformation(userId: string): Promise<User | null>;
     findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string, loyaltyId: string | null }[]>;
     getDriverById(driverId: string): Promise<any>;
-    updateVerificatorAndReturnId(data: Partial<User>): Promise<string>
+    updateVerificatorAndReturnId(data: Partial<User>): Promise<string>;
+
+    getVillageById(villageId: string): Promise<Partial<User>>;
 }

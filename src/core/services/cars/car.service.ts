@@ -35,6 +35,8 @@ class CarService {
 
     async getCarWithDriver(carStatus?: string) {
         const cars = await this.carRepository.getAllWithDriver();
+
+
         if (!carStatus) return cars;
         return cars.filter(car => car.carStatus === carStatus);
     }

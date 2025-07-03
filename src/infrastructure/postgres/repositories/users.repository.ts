@@ -1,369 +1,421 @@
-import { Injectable } from "@nestjs/common";
-import { AccountStatus, Address, CarStatus, PickupStatus, RescheduleStatus, User } from "@prisma/client";
-import { CustomConflict } from "src/core/exceptions/custom-conflict.exception";
-import { IUserRepository } from "src/core/interfaces/repositories/users.repository.interface";
-import PrismaService from "src/core/services/prisma/prisma.service";
-import { roleNumber } from "src/utils/enum/role.enum";
-import { normalizeUserDefaults } from "src/utils/normalized/user.normalize";
-import DayConvertion from "src/utils/static/dayjs";
+import { Injectable } from '@nestjs/common';
+import {
+  AccountStatus,
+  Address,
+  CarStatus,
+  PickupStatus,
+  RescheduleStatus,
+  User,
+} from '@prisma/client';
+import { CustomConflict } from 'src/core/exceptions/custom-conflict.exception';
+import { IUserRepository } from 'src/core/interfaces/repositories/users.repository.interface';
+import PrismaService from 'src/core/services/prisma/prisma.service';
+import { roleNumber } from 'src/utils/enum/role.enum';
+import { normalizeUserDefaults } from 'src/utils/normalized/user.normalize';
+import DayConvertion from 'src/utils/static/dayjs';
 
 @Injectable()
 class UsersRepository implements IUserRepository {
-    constructor(
-        private prisma: PrismaService
-    ) { }
+  constructor(private prisma: PrismaService) {}
 
-    // async getTransporterOfDriver(driverId: string) {
-    //     const driver = await this.prisma.user.findFirstOrThrow({
-    //         where: {
-    //             userId: driverId,
-    //         },
-    //         select: {
-    //             transporterId: true,
-    //         }
-    //     })
+  // async getTransporterOfDriver(driverId: string) {
+  //     const driver = await this.prisma.user.findFirstOrThrow({
+  //         where: {
+  //             userId: driverId,
+  //         },
+  //         select: {
+  //             transporterId: true,
+  //         }
+  //     })
 
-    //     return driver.transporterId;
-    // }
+  //     return driver.transporterId;
+  // }
 
-    async getCitizenDetailByCitizenId(userId: string) {
-        return await this.prisma.user.findFirstOrThrow({
-            where: {
-                userId,
+  async getCitizenDetailByCitizenId(userId: string) {
+    return await this.prisma.user.findFirstOrThrow({
+      where: {
+        userId,
+      },
+      select: {
+        userId: true,
+        fullName: true,
+        address: true,
+        email: true,
+        phoneNumber: true,
+        village: {
+          select: {
+            id: true,
+            villageName: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getAssignedVillageId(userId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        userId,
+      },
+      select: {
+        driverVillageId: true,
+      },
+    });
+
+    return user?.driverVillageId ?? null;
+  }
+
+  async getVerificatorDataById(
+    verificatorId: string,
+  ): Promise<Partial<User> | null> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        userId: verificatorId,
+      },
+      select: {
+        userId: true,
+        fullName: true,
+        email: true,
+        phoneNumber: true,
+        address: true,
+        createdAt: true,
+      },
+    });
+
+    return user ?? null;
+  }
+
+  async checkAddressIsExist(
+    userId: string,
+  ): Promise<{ addressId: string | null } | null> {
+    return await this.prisma.user.findFirst({
+      where: {
+        userId,
+      },
+      select: {
+        addressId: true,
+      },
+    });
+  }
+
+  async updateAddNewAddress(addressId: string, userId: string) {
+    return await this.prisma.user.update({
+      data: {
+        addressId,
+      },
+      where: {
+        userId,
+      },
+    });
+  }
+
+  async getAccountCredentialWithEmail(email: string) {
+    return await this.prisma.user.findFirstOrThrow({
+      where: {
+        email,
+      },
+      select: {
+        userId: true,
+        email: true,
+        phoneNumber: true,
+        password: true,
+        villageId: true,
+        transporterId: true,
+      },
+    });
+  }
+
+  async registerAccount(
+    data: Partial<User>,
+    password?: string,
+  ): Promise<string> {
+    // const password = await Hasher.hashPassword("driver123");
+    data = {
+      ...data,
+      password,
+    };
+    const normalized = normalizeUserDefaults(data);
+
+    try {
+      const { userId } = await this.prisma.user.create({ data: normalized });
+      return userId;
+    } catch (err) {
+      if (err.code === 'P2002') {
+        // Unique constraint failed
+        throw new CustomConflict('user', 'email');
+      }
+
+      throw err;
+    }
+  }
+
+  async registerAccountFullData(data: User): Promise<string> {
+    try {
+      const { userId } = await this.prisma.user.create({ data });
+
+      return userId;
+    } catch (err) {
+      if (err.code === 'P2002') {
+        // Unique constraint failed
+        throw new CustomConflict('user', 'email');
+      }
+      throw err;
+    }
+  }
+
+  async addRoleToAccount(roleId: string, userId: string) {
+    await this.prisma.userRoles.create({
+      data: {
+        roleId,
+        userId,
+      },
+    });
+  }
+
+  async getCitizens(): Promise<User[]> {
+    return await this.prisma.user.findMany();
+  }
+
+  async updateLastSeen(userId: string, date: Date): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        userId,
+      },
+      data: {
+        lastSeen: date,
+      },
+    });
+  }
+
+  async getDriverByTransporter(id: string, availableOnly?: boolean) {
+    return await this.prisma.user.findMany({
+      include: {
+        car: {
+          select: {
+            id: true,
+          },
+        },
+        address: true,
+        roles: true,
+      },
+      where: {
+        transporterId: id,
+        // address: availableOnly ? null : {
+        //     isNot: null
+        // },
+        // car: {
+        //     isNot: null
+        // },
+        roles: {
+          some: {
+            roleId: roleNumber.DRIVER,
+          },
+        },
+      },
+      // where: {
+      //     transporterId: id,
+      //     ...(addressIsNull ? {
+      //         address: null
+      //     } : {
+      //         NOT: {
+      //             address: null
+      //         }
+      //     })
+      // }
+    });
+  }
+
+  async getAllCitizenHavingAddressAndNotRescheduled() {
+    return await this.prisma.user.findMany({
+      where: {
+        roles: {
+          some: {
+            roleId: roleNumber.CITIZEN,
+          },
+        },
+        rescheduleStatus: RescheduleStatus.inactive,
+      },
+      select: {
+        userId: true,
+        villageId: true,
+        address: {
+          select: {
+            addressId: true,
+          },
+        },
+      },
+    });
+  }
+
+  async associateAllDriverToSelectedVillage(
+    drivers: string[],
+    driverVillageId: string,
+  ): Promise<void> {
+    await this.prisma.user.updateMany({
+      data: {
+        driverVillageId,
+      },
+      where: {
+        userId: {
+          in: drivers,
+        },
+      },
+    });
+  }
+
+  // /trash/pickup-list
+  async getActiveCitizensWithTodayDraftTrash(villageId: string) {
+    // refactor
+    const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
+
+    return await this.prisma.user.findMany({
+      where: {
+        accountStatus: AccountStatus.active,
+        villageId: villageId,
+        rescheduleStatus: RescheduleStatus.inactive,
+        trashCitizen: {
+          some: {
+            pickupStatus: {
+              in: [PickupStatus.generated, PickupStatus.cancelled],
             },
-            select: {
-                userId: true,
-                fullName: true,
-                address: true,
-                village: {
-                    select: {
-                        id: true,
-                        villageName: true
-                    }
-                }
-            }
-        })
-    }
-
-    async getAssignedVillageId(userId: string) {
-        const user = await this.prisma.user.findFirst({
-            where: {
-                userId
+            createdAt: {
+              gte: todayStart,
+              lte: todayEnd,
             },
-            select: {
-                driverVillageId: true
-            }
-        });
-
-        return user?.driverVillageId ?? null;
-    }
-
-    async getVerificatorDataById(verificatorId: string): Promise<User | null> {
-        const user = await this.prisma.user.findFirst({
-            where: {
-                userId: verificatorId
-            }
-        });
-
-        return user ?? null;
-    }
-
-    async checkAddressIsExist(userId: string): Promise<{ addressId: string | null } | null> {
-        return await this.prisma.user.findFirst({
-            where: {
-                userId,
+          },
+        },
+      },
+      select: {
+        userId: true,
+        fullName: true,
+        address: {
+          select: {
+            addressId: true,
+            fullAddress: true,
+            lat: true,
+            lng: true,
+          },
+        },
+        trashCitizen: {
+          where: {
+            pickupStatus: PickupStatus.generated,
+            createdAt: {
+              gte: todayStart,
+              lte: todayEnd,
             },
-            select: {
-                addressId: true,
-            },
-        })
-    }
+          },
+          select: {
+            id: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+  }
 
-    async updateAddNewAddress(addressId: string, userId: string) {
-        return await this.prisma.user.update({
-            data: {
-                addressId
-            },
-            where: {
-                userId
-            }
-        })
-    }
+  async findAllCitizenOnlyAddressIdInVillage(
+    villageId: string,
+  ): Promise<
+    { addresses: Address; userId: string; loyaltyId: string | null }[]
+  > {
+    const datas = await this.prisma.user.findMany({
+      where: {
+        villageId,
+        addressId: {
+          not: null,
+        },
+        roles: {
+          some: {
+            roleId: roleNumber.CITIZEN,
+          },
+        },
+      },
+      select: {
+        address: true,
+        userId: true,
+        loyaltyId: true,
+      },
+    });
 
-    async getAccountCredentialWithEmail(email: string) {
-        return await this.prisma.user.findFirstOrThrow({
-            where: {
-                email
-            },
-            select: {
-                userId: true,
-                email: true,
-                phoneNumber: true,
-                password: true,
-                villageId: true,
-                transporterId: true,
-            }
-        })
-    }
+    return datas.map((data) => ({
+      addresses: data.address as Address,
+      userId: data.userId,
+      loyaltyId: data.loyaltyId,
+    }));
+  }
 
-    async registerAccount(data: Partial<User>, password?: string): Promise<string> {
-        // const password = await Hasher.hashPassword("driver123");
-        data = {
-            ...data,
-            password
-        }
-        const normalized = normalizeUserDefaults(data);
+  async getSelfInformation(userId: string): Promise<User | null> {
+    return await this.prisma.user.findFirst({
+      where: {
+        userId,
+      },
+    });
+  }
 
-        try {
-            const { userId } = await this.prisma.user.create({ data: normalized });
-            return userId;
-        } catch (err) {
-            if (err.code === 'P2002') { // Unique constraint failed
-                throw new CustomConflict('user', 'email');
-            }
+  async getDriverById(driverId: string) {
+    return await this.prisma.user.findFirstOrThrow({
+      where: {
+        userId: driverId,
+        roles: {
+          some: {
+            roleId: roleNumber.DRIVER,
+          },
+        },
+      },
+      select: {
+        userId: true,
+        fullName: true,
+        phoneNumber: true,
+        email: true,
+        createdAt: true,
+        accountStatus: true,
+        simNo: true,
+        lastSeen: true,
+        address: true,
+        driverVillage: {
+          select: {
+            id: true,
+            villageName: true,
+          },
+        },
+        car: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+  }
 
-            throw err;
-        }
-    }
+  async updateVerificatorAndReturnId(data: Partial<User>): Promise<string> {
+    const verificator = await this.prisma.user.update({
+      where: {
+        userId: data.userId,
+      },
+      data,
+    });
 
+    return verificator.userId;
+  }
 
-    async registerAccountFullData(data: User): Promise<string> {
-        try {
-            const { userId } = await this.prisma.user.create({ data });
+  async getVillageById(villageId: string): Promise<Partial<User>> {
+    const user = await this.prisma.user.findFirstOrThrow({
+      where: {
+        userId: villageId,
+      },
+      select: {
+        userId: true,
+        email: true,
+        address: true,
+        phoneNumber: true
+      }
+    });
 
-            return userId;
-        } catch (err) {
-            if (err.code === 'P2002') { // Unique constraint failed
-                throw new CustomConflict('user', 'email');
-            }
-            throw err;
-        }
-    }
-
-    async addRoleToAccount(roleId: string, userId: string) {
-        await this.prisma.userRoles.create({
-            data: {
-                roleId,
-                userId,
-            }
-        })
-    }
-
-    async getCitizens(): Promise<User[]> {
-        return await this.prisma.user.findMany();
-    }
-
-    async updateLastSeen(userId: string, date: Date): Promise<void> {
-        await this.prisma.user.update({
-            where: {
-                userId,
-            },
-            data: {
-                lastSeen: date
-            }
-        })
-    }
-
-    async getDriverByTransporter(id: string, availableOnly?: boolean) {
-        return await this.prisma.user.findMany({
-            include: {
-                car: {
-                    select: {
-                        id: true,
-                    }
-                },
-                address: true,
-                roles: true
-            },
-            where: {
-                transporterId: id,
-                // address: availableOnly ? null : {
-                //     isNot: null
-                // },
-                // car: {
-                //     isNot: null
-                // },
-                roles: {
-                    some: {
-                        roleId: roleNumber.DRIVER,
-                    }
-                }
-            }
-            // where: {
-            //     transporterId: id,
-            //     ...(addressIsNull ? {
-            //         address: null
-            //     } : {
-            //         NOT: {
-            //             address: null
-            //         }
-            //     })
-            // }
-        })
-    }
-
-    async getAllCitizenHavingAddressAndNotRescheduled() {
-        return await this.prisma.user.findMany({
-            where: {
-                roles: {
-                    some: {
-                        roleId: roleNumber.CITIZEN,
-                    }
-                },
-                rescheduleStatus: RescheduleStatus.inactive,
-            },
-            select: {
-                userId: true,
-                villageId: true,
-                address: {
-                    select: {
-                        addressId: true,
-                    },
-                },
-            }
-        });
-    }
-
-    async associateAllDriverToSelectedVillage(drivers: string[], driverVillageId: string): Promise<void> {
-        await this.prisma.user.updateMany({
-            data: {
-                driverVillageId
-            },
-            where: {
-                userId: {
-                    in: drivers
-                }
-            }
-        })
-    }
-
-    // /trash/pickup-list
-    async getActiveCitizensWithTodayDraftTrash(villageId: string) {
-        // refactor
-        const { todayStart, todayEnd } = DayConvertion.getStartAndEndForToday();
-
-        return await this.prisma.user.findMany({
-            where: {
-                accountStatus: AccountStatus.active,
-                villageId: villageId,
-                rescheduleStatus: RescheduleStatus.inactive,
-                trashCitizen: {
-                    some: {
-                        pickupStatus: {
-                            in: [PickupStatus.generated, PickupStatus.cancelled]
-                        },
-                        createdAt: {
-                            gte: todayStart,
-                            lte: todayEnd,
-                        },
-                    },
-                },
-            },
-            select: {
-                userId: true,
-                fullName: true,
-                address: {
-                    select: {
-                        addressId: true,
-                        fullAddress: true,
-                        lat: true,
-                        lng: true,
-                    }
-                },
-                trashCitizen: {
-                    where: {
-                        pickupStatus: PickupStatus.generated,
-                        createdAt: {
-                            gte: todayStart,
-                            lte: todayEnd,
-                        },
-                    },
-                    select: {
-                        id: true,
-                    },
-                    orderBy: {
-                        createdAt: 'desc',
-                    },
-                    take: 1
-                }
-            }
-        });
-    }
-
-    async findAllCitizenOnlyAddressIdInVillage(villageId: string): Promise<{ addresses: Address, userId: string, loyaltyId: string | null }[]> {
-        const datas = await this.prisma.user.findMany({
-            where: {
-                villageId,
-                addressId: {
-                    not: null
-                },
-                roles: {
-                    some: {
-                        roleId: roleNumber.CITIZEN
-                    }
-                }
-            },
-            select: {
-                address: true,
-                userId: true,
-                loyaltyId: true,
-            }
-        });
-
-        return datas.map(data => ({
-            addresses: data.address as Address,
-            userId: data.userId,
-            loyaltyId: data.loyaltyId,
-        }));
-    }
-
-    async getSelfInformation(userId: string): Promise<User | null> {
-        return await this.prisma.user.findFirst({
-            where: {
-                userId
-            },
-        })
-    }
-
-    async getDriverById(driverId: string) {
-        return await this.prisma.user.findFirstOrThrow({
-            where: {
-                userId: driverId,
-                roles: {
-                    some: {
-                        roleId: roleNumber.DRIVER
-                    }
-                }
-            },
-            select: {
-                userId: true,
-                fullName: true,
-                phoneNumber: true,
-                email: true,
-                createdAt: true,
-                accountStatus: true,
-                simNo: true,
-                lastSeen: true,
-                address: true,
-                car: {
-                    select: {
-                        id: true,
-                    }
-                }
-            }
-        })
-    }
-
-    async updateVerificatorAndReturnId(data: Partial<User>): Promise<string> {
-        const verificator = await this.prisma.user.update({
-            where: {
-                userId: data.userId
-            },
-            data,
-        });
-
-        return verificator.userId;
-    }
+    return user;
+  }
 }
 
 export default UsersRepository;

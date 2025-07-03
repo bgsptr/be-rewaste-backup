@@ -22,10 +22,11 @@ class CarRepository implements ICarRepository {
             include: {
                 driver: {
                     select: {
+                        village: true,
                         userId: true,
                         fullName: true
                     }
-                }
+                },
             }
         })
     }
@@ -73,6 +74,20 @@ class CarRepository implements ICarRepository {
         return await this.prisma.car.findFirstOrThrow({
             where: {
                 id,
+            },
+            include: {
+                driver: {
+                    select: {
+                        userId: true,
+                        fullName: true,
+                        village: {
+                            select: {
+                                id: true,
+                                villageName: true,
+                            }
+                        }
+                    }
+                }
             }
         })
     }
@@ -81,6 +96,7 @@ class CarRepository implements ICarRepository {
         return await this.prisma.car.update({
             data: {
                 driverId,
+                carStatus: CarStatus.operate,
             },
             where: {
                 id: carId,
